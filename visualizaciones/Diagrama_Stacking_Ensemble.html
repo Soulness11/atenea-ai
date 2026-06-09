@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stacking Ensemble — Modelo Predictivo de Deserción Escolar</title>
+<style>
+  :root {
+    --bg: #080E1A; --bg2: #0D1726; --bg3: #111F33;
+    --gold: #C9A84C; --goldl: #E2C97E;
+    --blue: #2A6DB5; --bluel: #3B8FE8;
+    --cyan: #4ECDC4; --green: #27AE60;
+    --red: #E05C5C; --orange: #D35400;
+    --purp: #7B5EA7; --text: #E8EDF5; --text2: #9BAEC8;
+    --border: rgba(201,168,76,0.18);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+  header {
+    background:var(--bg2); border-bottom:1px solid var(--border);
+    padding:1.2rem 2rem; display:flex; align-items:center; gap:1.5rem;
+  }
+  .header-badge {
+    background:rgba(201,168,76,0.1); border:1px solid var(--border);
+    color:var(--goldl); font-size:0.72rem; font-weight:700;
+    letter-spacing:0.12em; text-transform:uppercase;
+    padding:0.3rem 0.9rem; border-radius:999px;
+  }
+  header h1 { font-size:1.1rem; font-weight:700; }
+  header p { font-size:0.82rem; color:var(--text2); }
+
+  .tabs {
+    display:flex; gap:0; border-bottom:1px solid var(--border);
+    background:var(--bg2); padding:0 2rem;
+  }
+  .tab {
+    padding:0.8rem 1.4rem; font-size:0.83rem; font-weight:600;
+    color:var(--text2); cursor:pointer; border:none; background:transparent;
+    border-bottom:2px solid transparent; letter-spacing:0.02em;
+    transition:color 0.2s, border-color 0.2s;
+  }
+  .tab.active { color:var(--goldl); border-bottom-color:var(--gold); }
+  .tab:hover { color:var(--text); }
+
+  .panel { display:none; padding:2rem; }
+  .panel.active { display:block; }
+
+  /* ── DIAGRAM PANEL ── */
+  .diagram-wrap {
+    display:flex; flex-direction:column; align-items:center; gap:0;
+  }
+  .layer-label {
+    font-size:0.7rem; font-weight:700; letter-spacing:0.12em;
+    text-transform:uppercase; color:var(--text2); margin-bottom:0.6rem;
+    align-self:flex-start; padding-left:0.5rem;
+  }
+  .layer { display:flex; gap:1.2rem; justify-content:center; width:100%; margin-bottom:0; }
+
+  /* Boxes */
+  .box {
+    border-radius:10px; padding:1rem 1.4rem;
+    border:1px solid; position:relative; min-width:160px; text-align:center;
+  }
+  .box-icon { font-size:1.4rem; margin-bottom:0.4rem; display:block; }
+  .box h3 { font-size:0.85rem; font-weight:700; margin-bottom:0.3rem; }
+  .box p { font-size:0.75rem; opacity:0.75; line-height:1.45; }
+
+  .box-input { background:rgba(43,109,181,0.1); border-color:rgba(43,109,181,0.3); }
+  .box-input h3 { color:var(--bluel); }
+  .box-xgb { background:rgba(212,83,0,0.1); border-color:rgba(212,83,0,0.35); }
+  .box-xgb h3 { color:#E67E22; }
+  .box-rf { background:rgba(39,174,96,0.1); border-color:rgba(39,174,96,0.35); }
+  .box-rf h3 { color:var(--green); }
+  .box-gb { background:rgba(123,94,167,0.1); border-color:rgba(123,94,167,0.35); }
+  .box-gb h3 { color:var(--purp); }
+  .box-fnn { background:rgba(201,168,76,0.1); border-color:rgba(201,168,76,0.35); }
+  .box-fnn h3 { color:var(--goldl); }
+  .box-out-low { background:rgba(39,174,96,0.15); border-color:rgba(39,174,96,0.4); }
+  .box-out-low h3 { color:var(--green); }
+  .box-out-mid { background:rgba(230,126,34,0.15); border-color:rgba(230,126,34,0.4); }
+  .box-out-mid h3 { color:#E67E22; }
+  .box-out-hi { background:rgba(224,92,92,0.15); border-color:rgba(224,92,92,0.4); }
+  .box-out-hi h3 { color:var(--red); }
+
+  /* Arrows */
+  .arrow-row {
+    display:flex; justify-content:center; align-items:center;
+    height:44px; width:100%; gap:1.2rem;
+  }
+  .arr { display:flex; flex-direction:column; align-items:center; flex:1; max-width:160px; min-width:160px; }
+  .arr-line {
+    width:2px; height:24px;
+    background:linear-gradient(to bottom, var(--border), var(--gold));
+  }
+  .arr-head {
+    width:0; height:0;
+    border-left:6px solid transparent; border-right:6px solid transparent;
+    border-top:8px solid var(--gold);
+  }
+  .arr-label { font-size:0.66rem; color:var(--text2); margin-top:0.3rem; text-align:center; }
+
+  .arr-fan-row {
+    display:flex; gap:1.2rem; justify-content:center;
+    width:100%; height:56px; align-items:flex-end;
+  }
+  .arr-fan { flex:1; max-width:160px; min-width:160px;
+    display:flex; flex-direction:column; align-items:center; }
+
+  .merge-arrow {
+    display:flex; flex-direction:column; align-items:center;
+    height:64px; justify-content:center;
+  }
+  .merge-line { width:2px; height:32px; background:linear-gradient(to bottom, var(--gold), var(--cyan)); }
+  .merge-head { width:0; height:0;
+    border-left:7px solid transparent; border-right:7px solid transparent;
+    border-top:10px solid var(--cyan); }
+  .merge-label { font-size:0.68rem; color:var(--cyan); margin-top:0.3rem; font-weight:600; text-align:center; }
+
+  .collector {
+    background:rgba(78,205,196,0.08); border:1px solid rgba(78,205,196,0.25);
+    border-radius:8px; padding:0.6rem 1.4rem; text-align:center;
+    font-size:0.78rem; color:var(--cyan); font-weight:600;
+  }
+
+  /* ── METRIC PANEL ── */
+  .metric-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1.2rem; max-width:900px; margin:0 auto; }
+  .metric-card {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:10px; padding:1.4rem;
+  }
+  .metric-card.main { border-color:rgba(201,168,76,0.4); background:rgba(201,168,76,0.05); }
+  .metric-top { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.7rem; }
+  .metric-icon { font-size:1.3rem; }
+  .metric-name { font-size:0.85rem; font-weight:700; }
+  .metric-card.main .metric-name { color:var(--goldl); }
+  .metric-formula {
+    font-family:monospace; font-size:0.82rem; color:var(--bluel);
+    background:rgba(59,143,232,0.08); padding:0.3rem 0.6rem; border-radius:4px;
+    margin-bottom:0.6rem; display:inline-block;
+  }
+  .metric-desc { font-size:0.78rem; color:var(--text2); line-height:1.55; }
+
+  /* Threshold viz */
+  .threshold-bar {
+    height:40px; border-radius:8px; position:relative; overflow:visible;
+    background:linear-gradient(to right, #27AE60 0%, #27AE60 30%, #E67E22 30%, #E67E22 60%, #E05C5C 60%, #E05C5C 100%);
+    margin:1.5rem auto; max-width:600px;
+  }
+  .th-label {
+    position:absolute; top:-22px; font-size:0.72rem; font-weight:700;
+    transform:translateX(-50%); color:var(--text2);
+  }
+  .th-tick { position:absolute; top:0; bottom:0; width:2px; background:var(--bg); }
+  .th-zone {
+    position:absolute; bottom:-24px; font-size:0.7rem; font-weight:700;
+    text-align:center;
+  }
+
+  /* ── TEMPORAL PANEL ── */
+  .timeline-h {
+    display:grid; grid-template-columns:repeat(4,1fr); gap:0; max-width:900px; margin:2rem auto;
+  }
+  .tl-col { display:flex; flex-direction:column; align-items:center; }
+  .tl-top {
+    width:100%; text-align:center; padding:0.8rem 0.5rem;
+    font-size:0.82rem; font-weight:700; border-radius:8px 8px 0 0;
+  }
+  .tl-t0 { background:rgba(43,109,181,0.2); color:var(--bluel); border:1px solid rgba(43,109,181,0.3); }
+  .tl-t1 { background:rgba(39,174,96,0.15); color:var(--green); border:1px solid rgba(39,174,96,0.3); }
+  .tl-t2 { background:rgba(123,94,167,0.15); color:var(--purp); border:1px solid rgba(123,94,167,0.3); }
+  .tl-t3 { background:rgba(224,92,92,0.15); color:var(--red); border:1px solid rgba(224,92,92,0.3); }
+  .tl-body {
+    width:100%; padding:0.8rem 0.6rem; font-size:0.75rem; color:var(--text2);
+    border:1px solid var(--border); border-top:none; min-height:120px; line-height:1.55;
+  }
+  .tl-role {
+    width:100%; text-align:center; padding:0.5rem;
+    font-size:0.72rem; font-weight:700; border:1px solid var(--border); border-top:none;
+    border-radius:0 0 8px 8px;
+  }
+  .tl-feat { background:rgba(43,109,181,0.08); color:var(--bluel); }
+  .tl-label-role { background:rgba(224,92,92,0.12); color:var(--red); }
+  .arrow-h {
+    display:flex; align-items:center; gap:0; max-width:900px; margin:0 auto;
+  }
+  .arr-h-seg { flex:1; height:2px; background:linear-gradient(to right, var(--gold), var(--cyan)); }
+  .arr-h-head { width:0; height:0; border-top:6px solid transparent; border-bottom:6px solid transparent; border-left:10px solid var(--cyan); }
+  .timeline-caption { text-align:center; color:var(--text2); font-size:0.78rem; margin-top:1rem; font-style:italic; }
+
+  /* ── SHAP PANEL ── */
+  .shap-demo { max-width:700px; margin:0 auto; }
+  .shap-title { font-size:0.9rem; font-weight:700; margin-bottom:1.2rem; color:var(--goldl); }
+  .shap-bar-wrap { margin-bottom:0.8rem; }
+  .shap-feat { font-size:0.8rem; color:var(--text2); margin-bottom:0.3rem; display:flex; justify-content:space-between; }
+  .shap-track { background:var(--bg3); border-radius:4px; height:22px; position:relative; overflow:hidden; }
+  .shap-fill { height:100%; border-radius:4px; position:absolute; display:flex; align-items:center; padding:0 0.4rem; font-size:0.72rem; font-weight:700; }
+  .shap-pos { background:rgba(224,92,92,0.7); left:50%; color:#fff; }
+  .shap-neg { background:rgba(39,174,96,0.7); right:50%; color:#fff; justify-content:flex-end; }
+  .shap-midline { position:absolute; left:50%; top:0; bottom:0; width:1px; background:var(--border); }
+  .shap-legend { display:flex; gap:1.5rem; margin-top:1rem; font-size:0.75rem; color:var(--text2); }
+  .shap-leg-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:0.3rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="header-badge">SIPTech-002 · PAS v0.1 · Lumina Labstech</div>
+    <h1 style="margin-top:0.4rem">Modelo Predictivo de Deserción Escolar — Stacking Ensemble</h1>
+    <p>Supervised Learning Longitudinal Predictive Model · XGBoost + RF + GB → FNN · Primera Iteración 2026</p>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="show('diagram')">Diagrama del Modelo</button>
+  <button class="tab" onclick="show('temporal')">Diseño Temporal</button>
+  <button class="tab" onclick="show('metrics')">Métricas de Evaluación</button>
+  <button class="tab" onclick="show('shap')">Interpretabilidad (SHAP)</button>
+</div>
+
+<!-- TAB 1: DIAGRAM -->
+<div id="panel-diagram" class="panel active">
+  <div class="diagram-wrap" style="max-width:880px;margin:0 auto;">
+
+    <p class="layer-label" style="align-self:center;margin-bottom:1rem">Flujo completo del modelo · de izquierda a derecha</p>
+
+    <!-- INPUT LAYER -->
+    <p class="layer-label">Capa de entrada — Features (X)</p>
+    <div class="layer">
+      <div class="box box-input" style="flex:1">
+        <span class="box-icon">🧠</span>
+        <h3>Variables Psicoemocionales</h3>
+        <p>Bienestar · Autoeficacia · Motivación · Resiliencia · Apoyo social · Afiliación</p>
+        <p style="margin-top:0.4rem;font-size:0.7rem;color:#4ECDC4">165 ítems Likert (6 dimensiones)</p>
+      </div>
+      <div class="box box-input" style="flex:1">
+        <span class="box-icon">📚</span>
+        <h3>Variables Académicas</h3>
+        <p>Calificaciones · Asistencia · Créditos aprobados · Promedio acumulado</p>
+        <p style="margin-top:0.4rem;font-size:0.7rem;color:#4ECDC4">Registros institucionales</p>
+      </div>
+      <div class="box box-input" style="flex:1">
+        <span class="box-icon">📅</span>
+        <h3>Datos Longitudinales</h3>
+        <p>Mediciones en T0 · T1 · T2 · Δ entre puntos temporales (trayectoria)</p>
+        <p style="margin-top:0.4rem;font-size:0.7rem;color:#4ECDC4">Diseño temporal explícito</p>
+      </div>
+    </div>
+
+    <!-- arrow down to base learners -->
+    <div class="arr-fan-row">
+      <div class="arr-fan"><div class="arr-line" style="height:20px"></div><div class="arr-head"></div></div>
+      <div class="arr-fan"><div class="arr-line" style="height:20px"></div><div class="arr-head"></div></div>
+      <div class="arr-fan"><div class="arr-line" style="height:20px"></div><div class="arr-head"></div></div>
+    </div>
+
+    <!-- BASE LEARNERS -->
+    <p class="layer-label">Nivel 1 — Base Learners (out-of-fold cross-validation)</p>
+    <div class="layer">
+      <div class="box box-xgb" style="flex:1">
+        <span class="box-icon">⚡</span>
+        <h3>XGBoost</h3>
+        <p>Gradient boosting basado en árboles. Regularización L1/L2 nativa. Alto rendimiento en datos tabulares.</p>
+        <p style="margin-top:0.5rem;font-size:0.7rem;color:#E67E22">Chen & Guestrin (2016)</p>
+      </div>
+      <div class="box box-rf" style="flex:1">
+        <span class="box-icon">🌲</span>
+        <h3>Random Forest</h3>
+        <p>Bagging de árboles de decisión. Muestreo aleatorio de features. Alta estabilidad ante ruido.</p>
+        <p style="margin-top:0.5rem;font-size:0.7rem;color:#27AE60">Breiman (2001)</p>
+      </div>
+      <div class="box box-gb" style="flex:1">
+        <span class="box-icon">📈</span>
+        <h3>Gradient Boosting</h3>
+        <p>Optimización iterativa de pérdida. Early stopping. Learning rate bajo para mejor generalización.</p>
+        <p style="margin-top:0.5rem;font-size:0.7rem;color:#7B5EA7">Friedman (2001)</p>
+      </div>
+    </div>
+
+    <!-- predictions collector -->
+    <div class="merge-arrow">
+      <div class="merge-line" style="background:linear-gradient(to bottom,var(--gold),var(--cyan));width:80%;height:2px;margin:8px auto"></div>
+    </div>
+    <div class="collector" style="max-width:660px">
+      🔀 Predicciones out-of-fold de los 3 base learners → Vector de meta-features para el meta-learner<br>
+      <span style="font-size:0.7rem;opacity:0.7">[P_XGB(x), P_RF(x), P_GB(x)] para cada clase (Bajo/Medio/Alto)</span>
+    </div>
+    <div class="merge-arrow">
+      <div class="merge-line" style="height:28px"></div>
+      <div class="merge-head"></div>
+      <div class="merge-label">Stacking · Wolpert (1992)</div>
+    </div>
+
+    <!-- META-LEARNER -->
+    <p class="layer-label">Nivel 2 — Meta-learner</p>
+    <div class="layer">
+      <div class="box box-fnn" style="flex:1;max-width:460px">
+        <span class="box-icon">🤖</span>
+        <h3>Red Neuronal Feedforward (FNN)</h3>
+        <p>Aprende la función de combinación óptima de las predicciones base. 2–3 capas ocultas (64→32→16). Activación ReLU. Dropout(0.3–0.5). Regularización L2. Early stopping con patience=10.</p>
+        <p style="margin-top:0.5rem;font-size:0.7rem;color:#E2C97E">LeCun et al. (2015) · Srivastava et al. (2014)</p>
+      </div>
+    </div>
+
+    <!-- arrow to output -->
+    <div class="merge-arrow">
+      <div class="merge-line" style="height:28px"></div>
+      <div class="merge-head" style="border-top-color:var(--green)"></div>
+    </div>
+
+    <!-- OUTPUT -->
+    <p class="layer-label">Capa de salida — Predicción (ŷ) + Probabilidad de riesgo</p>
+    <div class="layer">
+      <div class="box box-out-low" style="flex:1">
+        <span class="box-icon">🟢</span>
+        <h3>Riesgo Bajo</h3>
+        <p>P(deserción) = 0.0–0.3<br>Monitoreo estándar.<br>Sin intervención urgente.</p>
+      </div>
+      <div class="box box-out-mid" style="flex:1">
+        <span class="box-icon">🟡</span>
+        <h3>Riesgo Medio</h3>
+        <p>P(deserción) = 0.3–0.6<br>Tutoría preventiva.<br>Revisión en T2.</p>
+      </div>
+      <div class="box box-out-hi" style="flex:1">
+        <span class="box-icon">🔴</span>
+        <h3>Riesgo Alto</h3>
+        <p>P(deserción) = 0.6–1.0<br>Intervención inmediata.<br>Apoyo psicológico + beca.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:1.5rem;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem 1.4rem;max-width:700px;text-align:center;">
+      <p style="font-size:0.78rem;color:var(--text2)">
+        <strong style="color:var(--goldl)">+ SHAP Values</strong> — Para cada predicción: contribución de cada variable psicoemocional y académica al score de riesgo.
+        Permite intervención informada: no solo "riesgo alto", sino "baja autoeficacia + bajo sentido de pertenencia son los factores dominantes".
+        <br><span style="color:var(--cyan)">Lundberg & Lee (2017)</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: TEMPORAL -->
+<div id="panel-temporal" class="panel">
+  <div style="max-width:900px;margin:0 auto;">
+    <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:0.5rem;color:var(--goldl)">Diseño Longitudinal del Dataset</h2>
+    <p style="color:var(--text2);font-size:0.85rem;margin-bottom:2rem">El label (deserción) <strong style="color:var(--red)">siempre ocurre DESPUÉS</strong> de las mediciones. Este principio previene el data leakage temporal y garantiza que el modelo aprende a anticipar, no a describir.</p>
+
+    <div class="arrow-h" style="margin-bottom:0.3rem">
+      <div class="arr-h-seg"></div>
+      <div class="arr-h-head"></div>
+    </div>
+    <div style="text-align:right;max-width:900px;margin:0 auto 1rem;font-size:0.7rem;color:var(--cyan);font-weight:700">→ TIEMPO →</div>
+
+    <div class="timeline-h">
+      <div class="tl-col">
+        <div class="tl-top tl-t0">T0<br><span style="font-size:0.7rem;font-weight:400">Inicio semestre</span></div>
+        <div class="tl-body">
+          <strong style="color:var(--bluel)">Psicoemocional baseline</strong><br>
+          Bienestar · Autoeficacia · Motivación · Apoyo social · Sentido de pertenencia<br><br>
+          <strong style="color:var(--bluel)">Sociodemográfico</strong><br>
+          Nivel socioeconómico · Antecedentes académicos · Perfil familiar
+        </div>
+        <div class="tl-role tl-feat">📥 Feature (X) — Línea base</div>
+      </div>
+      <div class="tl-col">
+        <div class="tl-top tl-t1">T1<br><span style="font-size:0.7rem;font-weight:400">Mes 2–3</span></div>
+        <div class="tl-body">
+          <strong style="color:var(--green)">Académico parcial</strong><br>
+          Calificaciones 1er parcial · Asistencia<br><br>
+          <strong style="color:var(--green)">Psicoemocional T1</strong><br>
+          Estrés · Burnout · Cambio en motivación respecto a T0 (Δ)
+        </div>
+        <div class="tl-role tl-feat">📥 Feature (X) — Señal temprana</div>
+      </div>
+      <div class="tl-col">
+        <div class="tl-top tl-t2">T2<br><span style="font-size:0.7rem;font-weight:400">Mes 4–5</span></div>
+        <div class="tl-body">
+          <strong style="color:var(--purp)">Longitudinal</strong><br>
+          Créditos acumulados · Promedio actualizado · Engagement académico<br><br>
+          <strong style="color:var(--purp)">Psicoemocional T2</strong><br>
+          Trayectoria de cambio T0→T1→T2 en variables clave
+        </div>
+        <div class="tl-role tl-feat">📥 Feature (X) — Señal intermedia</div>
+      </div>
+      <div class="tl-col">
+        <div class="tl-top tl-t3">T3<br><span style="font-size:0.7rem;font-weight:400">Fin semestre</span></div>
+        <div class="tl-body">
+          <strong style="color:var(--red)">¿Desertó?</strong><br>
+          0 = No desertó<br>
+          1 = Desertó<br><br>
+          Verificado con registros institucionales. Nunca disponible durante el entrenamiento de features.
+        </div>
+        <div class="tl-role tl-label-role">🏷️ Label (y) — Ocurre DESPUÉS</div>
+      </div>
+    </div>
+
+    <div class="timeline-caption">
+      El modelo se entrena con T0+T1+T2 → predice T3. Validación cruzada temporal: entrenar con cohortes anteriores, validar en la más reciente.<br>
+      <strong style="color:var(--red)">Regla de oro: nunca train on the future (Saarela & Yener, 2020).</strong>
+    </div>
+
+    <div style="margin-top:2rem;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.4rem;max-width:760px;margin-left:auto;margin-right:auto;">
+      <h3 style="font-size:0.9rem;font-weight:700;color:var(--cyan);margin-bottom:0.8rem">Extensiones temporales futuras</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
+        <div style="text-align:center;padding:0.8rem;background:rgba(78,205,196,0.07);border-radius:8px;">
+          <div style="font-size:1.2rem;margin-bottom:0.3rem">⏱️</div>
+          <div style="font-size:0.78rem;font-weight:700;color:var(--cyan)">Predicción dinámica</div>
+          <div style="font-size:0.72rem;color:var(--text2)">Score de riesgo en T0, T1, T2 (no solo al final)</div>
+        </div>
+        <div style="text-align:center;padding:0.8rem;background:rgba(123,94,167,0.07);border-radius:8px;">
+          <div style="font-size:1.2rem;margin-bottom:0.3rem">📊</div>
+          <div style="font-size:0.78rem;font-weight:700;color:var(--purp)">Survival Analysis</div>
+          <div style="font-size:0.72rem;color:var(--text2)">¿En qué semana es más probable desertar?</div>
+        </div>
+        <div style="text-align:center;padding:0.8rem;background:rgba(201,168,76,0.07);border-radius:8px;">
+          <div style="font-size:1.2rem;margin-bottom:0.3rem">🔄</div>
+          <div style="font-size:0.78rem;font-weight:700;color:var(--goldl)">Time Series ML</div>
+          <div style="font-size:0.72rem;color:var(--text2)">LSTM sobre trayectorias cognitivas (Hochreiter & Schmidhuber, 1997)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: METRICS -->
+<div id="panel-metrics" class="panel">
+  <div style="max-width:880px;margin:0 auto;">
+    <div style="background:rgba(224,92,92,0.08);border:1px solid rgba(224,92,92,0.3);border-radius:10px;padding:1.2rem 1.6rem;margin-bottom:2rem;">
+      <h2 style="font-size:0.95rem;font-weight:700;color:var(--red);margin-bottom:0.5rem">⚠️ Argumento central: Recall > Accuracy</h2>
+      <p style="font-size:0.83rem;color:var(--text2);line-height:1.6">Un modelo que predice "nadie deserta" tendría 70% de accuracy si el 70% no deserta — pero sería completamente inútil. El objetivo no es clasificar correctamente un conjunto de validación: es detectar estudiantes en riesgo antes de que la deserción ocurra. Un <strong style="color:var(--red)">falso negativo</strong> (no detectar a alguien que desertará) tiene un costo humano e institucional exponencialmente mayor que un <strong>falso positivo</strong> (ofrecer apoyo innecesario). <em>Meta: Recall ≥ 0.80 en la clase "Alto riesgo"</em> (Fawcett, 2006; Provost & Fawcett, 2013).</p>
+    </div>
+
+    <div class="metric-grid">
+      <div class="metric-card main">
+        <div class="metric-top"><span class="metric-icon">🎯</span><span class="metric-name">Recall (Sensibilidad)</span></div>
+        <div class="metric-formula">TP / (TP + FN)</div>
+        <p class="metric-desc">Métrica principal. De todos los que SÍ desertarán, ¿cuántos detecta el modelo? <strong>Meta ≥ 0.80</strong> en clase "Alto riesgo".</p>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top"><span class="metric-icon">🔬</span><span class="metric-name">Precisión</span></div>
+        <div class="metric-formula">TP / (TP + FP)</div>
+        <p class="metric-desc">De los clasificados como "riesgo", ¿cuántos realmente lo están? Balance con Recall vía threshold.</p>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top"><span class="metric-icon">⚖️</span><span class="metric-name">F1-Score</span></div>
+        <div class="metric-formula">2·(P·R)/(P+R)</div>
+        <p class="metric-desc">Media armónica. Útil con clases desbalanceadas. Se calcula por clase y promedio macro.</p>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top"><span class="metric-icon">📉</span><span class="metric-name">AUC-ROC</span></div>
+        <div class="metric-formula">∫ TPR d(FPR)</div>
+        <p class="metric-desc">Capacidad discriminativa independiente del umbral. <strong>Meta ≥ 0.80</strong> para validación inicial (Fawcett, 2006).</p>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top"><span class="metric-icon">🔲</span><span class="metric-name">Matriz de Confusión</span></div>
+        <div class="metric-formula">3×3 multiclase</div>
+        <p class="metric-desc">Bajo / Medio / Alto. Confundir "Bajo" con "Alto" es más grave que confundir adyacentes. Guía el threshold.</p>
+      </div>
+      <div class="metric-card">
+        <div class="metric-top"><span class="metric-icon">⚡</span><span class="metric-name">Equidad (Fairness)</span></div>
+        <div class="metric-formula">ΔMetric por grupo</div>
+        <p class="metric-desc">Monitorear métricas por género, nivel socioeconómico, etnicidad. Equalized odds (Barocas et al., 2019).</p>
+      </div>
+    </div>
+
+    <div style="margin-top:2rem;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.4rem;">
+      <h3 style="font-size:0.9rem;font-weight:700;color:var(--goldl);margin-bottom:1rem">Ajuste de Umbral (Threshold Tuning)</h3>
+      <p style="font-size:0.8rem;color:var(--text2);margin-bottom:1rem">Por defecto P(deserción) ≥ 0.5 → "Alto riesgo". Bajar el umbral a 0.4 o 0.3 aumenta el Recall a costa de la Precisión. Se evalúa el tradeoff en la curva precision-recall (Davis & Goadrich, 2006).</p>
+      <div style="position:relative;height:50px;margin:1.5rem 0.5rem;">
+        <div style="height:32px;border-radius:6px;background:linear-gradient(to right,#27AE60 0%,#27AE60 30%,#E67E22 30%,#E67E22 60%,#E05C5C 60%,#E05C5C 100%);"></div>
+        <div style="position:absolute;top:36px;left:0;font-size:0.72rem;font-weight:700;color:#27AE60">0.0</div>
+        <div style="position:absolute;top:36px;left:28%;transform:translateX(-50%);font-size:0.72rem;font-weight:700;color:var(--text2)">0.3 ↕</div>
+        <div style="position:absolute;top:36px;left:58%;transform:translateX(-50%);font-size:0.72rem;font-weight:700;color:var(--text2)">0.6 ↕</div>
+        <div style="position:absolute;top:36px;right:0;font-size:0.72rem;font-weight:700;color:var(--red)">1.0</div>
+        <div style="position:absolute;top:8px;left:13%;font-size:0.78rem;font-weight:700;color:#fff">BAJO</div>
+        <div style="position:absolute;top:8px;left:42%;font-size:0.78rem;font-weight:700;color:#fff">MEDIO</div>
+        <div style="position:absolute;top:8px;left:74%;font-size:0.78rem;font-weight:700;color:#fff">ALTO</div>
+      </div>
+      <p style="font-size:0.75rem;color:var(--text2);font-style:italic">Los umbrales (0.3 y 0.6) son ajustables según el contexto institucional y el costo de los tipos de error.</p>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: SHAP -->
+<div id="panel-shap" class="panel">
+  <div class="shap-demo">
+    <p style="color:var(--text2);font-size:0.85rem;margin-bottom:1.5rem;line-height:1.6">Los SHAP values (Lundberg & Lee, 2017) explican <em>por qué</em> el modelo clasificó a un estudiante como "Alto riesgo". No solo el score, sino la contribución de cada variable. Esto permite intervención informada: tutores saben en qué dimensión actuar.</p>
+
+    <div style="background:var(--bg2);border:1px solid rgba(224,92,92,0.4);border-radius:10px;padding:1.2rem;margin-bottom:1.5rem;">
+      <div style="font-size:0.82rem;font-weight:700;margin-bottom:0.3rem;color:var(--red)">🔴 Estudiante #47 — Riesgo Alto (P = 0.74)</div>
+      <div style="font-size:0.76rem;color:var(--text2)">Ejemplo demostrativo · Las variables con mayor contribución positiva al riesgo se muestran en rojo.</div>
+    </div>
+
+    <div class="shap-title">Contribución de cada variable al score de riesgo</div>
+
+    <!-- SHAP bars -->
+    <div id="shap-bars"></div>
+
+    <div class="shap-legend">
+      <span><span class="shap-leg-dot" style="background:#E05C5C"></span>Aumenta el riesgo (contribución positiva)</span>
+      <span><span class="shap-leg-dot" style="background:#27AE60"></span>Reduce el riesgo (contribución negativa)</span>
+    </div>
+
+    <div style="margin-top:2rem;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.2rem;">
+      <h3 style="font-size:0.85rem;font-weight:700;color:var(--goldl);margin-bottom:0.6rem">Mensaje institucional derivado</h3>
+      <p style="font-size:0.8rem;color:var(--text2);line-height:1.6">Para este estudiante, la intervención prioritaria no es académica (su promedio es moderado) sino <strong style="color:var(--red)">psicoemocional</strong>: la baja autoeficacia académica y el bajo sentido de pertenencia son los predictores dominantes de su riesgo. La recomendación del sistema: tutoría de refuerzo de autoconcepto académico + actividades de integración comunitaria.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function show(tab) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// SHAP bars
+const shapData = [
+  { feat:'Autoeficacia académica (baja)', val:0.31, dir:'pos' },
+  { feat:'Sentido de pertenencia (bajo)', val:0.24, dir:'pos' },
+  { feat:'Burnout académico (alto)', val:0.18, dir:'pos' },
+  { feat:'Motivación intrínseca (media)', val:0.09, dir:'pos' },
+  { feat:'Promedio parcial (moderado)', val:0.03, dir:'pos' },
+  { feat:'Apoyo familiar (alto)', val:0.16, dir:'neg' },
+  { feat:'Asistencia (regular)', val:0.08, dir:'neg' },
+  { feat:'Apoyo de pares (alto)', val:0.05, dir:'neg' },
+];
+const maxVal = Math.max(...shapData.map(d=>d.val));
+const cont = document.getElementById('shap-bars');
+shapData.forEach(d=>{
+  const pct = (d.val/maxVal)*44;
+  cont.innerHTML += `
+    <div class="shap-bar-wrap">
+      <div class="shap-feat"><span>${d.feat}</span><span style="color:${d.dir==='pos'?'#E05C5C':'#27AE60'}">${d.dir==='pos'?'+':'-'}${d.val.toFixed(2)}</span></div>
+      <div class="shap-track">
+        <div class="shap-midline"></div>
+        <div class="shap-fill shap-${d.dir}" style="width:${pct}%">${d.val.toFixed(2)}</div>
+      </div>
+    </div>
+  `;
+});
+</script>
+</body>
+</html>

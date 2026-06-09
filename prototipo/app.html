@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Alerta Temprana — Predicción de Deserción Escolar | UAQ DTE</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #1a3a5c;
+    --accent: #2980b9;
+    --success: #27ae60;
+    --warning: #e67e22;
+    --danger: #c0392b;
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --text: #2c3e50;
+    --border: #dce1e7;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+  /* ─── Header ─── */
+  header {
+    background: linear-gradient(135deg, var(--primary) 0%, #2c6fad 100%);
+    color: white; padding: 0;
+  }
+  .header-inner {
+    max-width: 1280px; margin: 0 auto; padding: 18px 28px;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .logo-circle {
+    width: 50px; height: 50px; border-radius: 50%;
+    background: rgba(255,255,255,0.2); display: flex; align-items: center;
+    justify-content: center; font-size: 22px; flex-shrink: 0;
+  }
+  header h1 { font-size: 1.35rem; font-weight: 700; line-height: 1.2; }
+  header p  { font-size: 0.82rem; opacity: 0.8; margin-top: 2px; }
+  .header-badge {
+    margin-left: auto; background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3); border-radius: 20px;
+    padding: 5px 14px; font-size: 0.75rem; white-space: nowrap;
+  }
+
+  /* ─── Nav tabs ─── */
+  nav {
+    background: var(--primary); border-bottom: 3px solid var(--accent);
+  }
+  .nav-inner {
+    max-width: 1280px; margin: 0 auto; padding: 0 28px;
+    display: flex; gap: 4px;
+  }
+  .tab-btn {
+    background: none; border: none; color: rgba(255,255,255,0.65);
+    padding: 13px 20px; cursor: pointer; font-size: 0.9rem;
+    border-bottom: 3px solid transparent; margin-bottom: -3px;
+    transition: all 0.2s; display: flex; align-items: center; gap: 7px;
+  }
+  .tab-btn:hover  { color: white; }
+  .tab-btn.active { color: white; border-bottom-color: #5dade2; font-weight: 600; }
+
+  /* ─── Main layout ─── */
+  main { max-width: 1280px; margin: 0 auto; padding: 28px; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ─── Cards ─── */
+  .card {
+    background: var(--card); border-radius: 10px;
+    box-shadow: var(--shadow); padding: 22px; margin-bottom: 20px;
+  }
+  .card h2 { font-size: 1.05rem; font-weight: 600; color: var(--primary); margin-bottom: 16px;
+             display: flex; align-items: center; gap: 8px; }
+  .card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 12px; color: #444; }
+
+  /* ─── Grid layouts ─── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  /* ─── KPI cards ─── */
+  .kpi { text-align: center; padding: 18px 12px; border-radius: 10px; }
+  .kpi.blue   { background: #e8f4fd; border-left: 4px solid var(--accent); }
+  .kpi.green  { background: #eafaf1; border-left: 4px solid var(--success); }
+  .kpi.orange { background: #fef9e7; border-left: 4px solid var(--warning); }
+  .kpi.red    { background: #fdedec; border-left: 4px solid var(--danger); }
+  .kpi-value  { font-size: 2rem; font-weight: 700; line-height: 1; }
+  .kpi-label  { font-size: 0.78rem; color: #666; margin-top: 5px; }
+  .kpi.blue .kpi-value   { color: var(--accent); }
+  .kpi.green .kpi-value  { color: var(--success); }
+  .kpi.orange .kpi-value { color: var(--warning); }
+  .kpi.red .kpi-value    { color: var(--danger); }
+
+  /* ─── Risk gauge ─── */
+  .gauge-container { text-align: center; padding: 16px 0; }
+  .gauge-arc { width: 200px; height: 100px; margin: 0 auto 12px; }
+  .risk-score { font-size: 3.5rem; font-weight: 800; }
+  .risk-label { font-size: 1rem; font-weight: 600; padding: 5px 20px; border-radius: 20px; display: inline-block; }
+  .risk-low    { background: #eafaf1; color: #1e8449; }
+  .risk-medium { background: #fef9e7; color: #b7770d; }
+  .risk-high   { background: #fdedec; color: #922b21; }
+
+  /* ─── Progress bars ─── */
+  .dim-row { margin-bottom: 10px; }
+  .dim-label { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.83rem; }
+  .progress-bar { height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+
+  /* ─── Form elements ─── */
+  .form-section { margin-bottom: 28px; }
+  .form-section h3 { font-size: 0.9rem; font-weight: 600; color: var(--primary);
+                     border-bottom: 2px solid var(--accent); padding-bottom: 6px; margin-bottom: 16px; }
+  .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label { font-size: 0.8rem; font-weight: 500; color: #555; }
+  .form-group input, .form-group select {
+    padding: 8px 11px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 0.88rem; color: var(--text); background: white;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(41,128,185,0.15);
+  }
+  .likert-item { margin-bottom: 12px; }
+  .likert-item .q-text { font-size: 0.85rem; margin-bottom: 7px; color: #444; }
+  .likert-options { display: flex; gap: 8px; }
+  .likert-options label {
+    flex: 1; text-align: center; cursor: pointer;
+    padding: 6px 4px; border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.8rem; transition: all 0.15s;
+  }
+  .likert-options input[type="radio"] { display: none; }
+  .likert-options input[type="radio"]:checked + label {
+    background: var(--accent); color: white; border-color: var(--accent); font-weight: 600;
+  }
+  .likert-options label:hover { background: #e8f4fd; border-color: var(--accent); }
+
+  /* ─── Buttons ─── */
+  .btn {
+    padding: 10px 24px; border: none; border-radius: 7px; cursor: pointer;
+    font-size: 0.9rem; font-weight: 600; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #2471a3; transform: translateY(-1px); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-lg { padding: 13px 32px; font-size: 1rem; }
+
+  /* ─── Table ─── */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+  .data-table th { background: var(--primary); color: white; padding: 10px 13px; text-align: left; font-weight: 500; }
+  .data-table td { padding: 9px 13px; border-bottom: 1px solid var(--border); }
+  .data-table tr:hover td { background: #f5f9fd; }
+  .badge {
+    padding: 3px 10px; border-radius: 12px; font-size: 0.75rem;
+    font-weight: 600; display: inline-block;
+  }
+  .badge-high   { background: #fdedec; color: #922b21; }
+  .badge-medium { background: #fef9e7; color: #b7770d; }
+  .badge-low    { background: #eafaf1; color: #1e8449; }
+
+  /* ─── Model metrics table ─── */
+  .metrics-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  .metrics-table th { padding: 10px 14px; background: #f0f4f8; font-weight: 600; color: var(--primary); text-align: center; border-bottom: 2px solid var(--border); }
+  .metrics-table td { padding: 9px 14px; text-align: center; border-bottom: 1px solid var(--border); }
+  .metrics-table .winner { font-weight: 700; color: var(--danger); }
+  .metrics-table tr:hover td { background: #f8fbff; }
+
+  /* ─── SHAP bars ─── */
+  .shap-bar-container { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .shap-label { font-size: 0.82rem; min-width: 180px; text-align: right; }
+  .shap-bar-track { flex: 1; height: 16px; background: #e9ecef; border-radius: 3px; overflow: hidden; position: relative; }
+  .shap-bar-fill { height: 100%; border-radius: 3px; }
+  .shap-val { font-size: 0.78rem; min-width: 45px; color: #666; }
+
+  /* ─── Stat highlight ─── */
+  .highlight-box {
+    background: linear-gradient(135deg, #e8f4fd, #fef9e7);
+    border: 1px solid #aed6f1; border-radius: 8px;
+    padding: 14px 18px; margin-bottom: 16px; font-size: 0.88rem;
+  }
+  .highlight-box strong { color: var(--primary); }
+
+  /* ─── Architecture diagram ─── */
+  .arch-grid { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; gap: 0; align-items: center; }
+  .arch-box {
+    background: white; border: 2px solid; border-radius: 8px; padding: 14px 10px;
+    text-align: center; font-size: 0.8rem;
+  }
+  .arch-arrow { font-size: 1.4rem; color: #aaa; text-align: center; padding: 0 8px; }
+  .arch-box.blue   { border-color: #3498db; }
+  .arch-box.orange { border-color: #e67e22; }
+  .arch-box.purple { border-color: #9b59b6; }
+  .arch-box.red    { border-color: #e74c3c; background: #fdedec; }
+  .arch-icon { font-size: 1.6rem; margin-bottom: 5px; }
+  .arch-title { font-weight: 700; font-size: 0.82rem; }
+  .arch-sub   { font-size: 0.72rem; color: #666; margin-top: 3px; }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 768px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr 1fr; }
+    main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo-circle">🎓</div>
+    <div>
+      <h1>Sistema de Alerta Temprana para Deserción Escolar</h1>
+      <p>Stacking Ensemble (RF + XGBoost + GB → FNN) · Variables Psicoemocionales · UAQ DTE</p>
+    </div>
+    <div class="header-badge">🔬 Prototipo Académico v1.0</div>
+  </div>
+</header>
+
+<nav>
+  <div class="nav-inner">
+    <button class="tab-btn active" onclick="showTab('dashboard')">📊 Dashboard</button>
+    <button class="tab-btn" onclick="showTab('instrumento')">📋 Instrumento</button>
+    <button class="tab-btn" onclick="showTab('prediccion')">🤖 Predicción</button>
+    <button class="tab-btn" onclick="showTab('modelos')">📈 Comparación ML</button>
+    <button class="tab-btn" onclick="showTab('shap')">🔍 Explicabilidad SHAP</button>
+    <button class="tab-btn" onclick="showTab('arquitectura')">⚙️ Arquitectura</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 1: DASHBOARD -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="tab-dashboard" class="tab-content active">
+
+  <div class="grid-4" style="margin-bottom:20px">
+    <div class="kpi red">
+      <div class="kpi-value">28.4%</div>
+      <div class="kpi-label">Tasa de Deserción<br>Estimada (institución)</div>
+    </div>
+    <div class="kpi orange">
+      <div class="kpi-value">47</div>
+      <div class="kpi-label">Estudiantes en Riesgo<br>Alto (este semestre)</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-value">165</div>
+      <div class="kpi-label">Ítems en el Instrumento<br>Psicoemocional</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-value">0.913</div>
+      <div class="kpi-label">AUC-ROC del Modelo<br>Stacking Ensemble</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h2>📊 Distribución de Riesgo por Dimensión Psicoemocional</h2>
+      <canvas id="radarChart" height="280"></canvas>
+    </div>
+    <div class="card">
+      <h2>📉 Estudiantes en Riesgo por Área</h2>
+      <canvas id="barChart" height="280"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⚠️ Lista de Estudiantes en Riesgo Alto — Semestre Actual</h2>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th><th>Área</th><th>Semestre</th>
+          <th>Promedio</th><th>Riesgo Global</th><th>Dimensión Crítica</th><th>Acción</th>
+        </tr>
+      </thead>
+      <tbody id="studentsTable"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 2: INSTRUMENTO -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="tab-instrumento" class="tab-content">
+
+  <div class="card">
+    <h2>📋 Instrumento Psicoemocional — 165 Ítems · Escala Likert 1–5</h2>
+    <div class="highlight-box">
+      <strong>Instrucciones:</strong> Por favor, responde con base en cómo te has sentido durante el último mes en tu vida académica. Selecciona la opción que mejor describa tu situación (1 = Totalmente en desacuerdo · 5 = Totalmente de acuerdo). No hay respuestas correctas ni incorrectas.
+    </div>
+
+    <div id="instrumentForm">
+      <!-- Generado por JS -->
+    </div>
+
+    <div style="text-align:center; margin-top: 24px;">
+      <button class="btn btn-primary btn-lg" onclick="calcularRiesgo()">
+        🤖 Calcular Riesgo de Deserción
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 3: PREDICCIÓN INDIVIDUAL -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="tab-prediccion" class="tab-content">
+
+  <div class="grid-2">
+    <div class="card">
+      <h2>🎯 Resultado de la Predicción</h2>
+      <div class="gauge-container">
+        <canvas id="gaugeCanvas" width="220" height="130"></canvas>
+        <div class="risk-score" id="riskScore" style="color:#e74c3c">72%</div>
+        <div><span class="risk-label risk-high" id="riskLabel">RIESGO ALTO</span></div>
+        <p style="font-size:0.82rem; color:#666; margin-top:12px;">
+          Probabilidad estimada de deserción en el semestre actual
+        </p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📐 Perfil por Dimensión Psicoemocional</h2>
+      <div id="dimProfile"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>💡 Recomendaciones de Intervención Personalizada</h2>
+    <div id="recomendaciones"></div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 4: COMPARACIÓN DE MODELOS ML -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="tab-modelos" class="tab-content">
+
+  <div class="card">
+    <h2>📊 Resultados Comparativos — Validación Cruzada 10-Fold</h2>
+    <p style="font-size:0.82rem; color:#666; margin-bottom:16px;">
+      Cada modelo fue entrenado de forma independiente antes de la integración en el Stacking Ensemble.
+      Media ± Desviación Estándar sobre 10 pliegues estratificados. Dataset: 500 estudiantes (sintético).
+    </p>
+    <table class="metrics-table">
+      <thead>
+        <tr><th>Modelo</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>AUC-ROC</th></tr>
+      </thead>
+      <tbody id="metricsTable"></tbody>
+    </table>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h2>📈 Comparación AUC-ROC</h2>
+      <canvas id="aucChart" height="280"></canvas>
+    </div>
+    <div class="card">
+      <h2>📈 Comparación F1-Score</h2>
+      <canvas id="f1Chart" height="280"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔄 Curvas ROC Comparativas</h2>
+    <canvas id="rocChart" height="280"></canvas>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 5: EXPLICABILIDAD SHAP -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="tab-shap" class="tab-content">
+
+  <div class="card">
+    <h2>🔍 Valores SHAP — Importancia Global de Variables</h2>
+    <div class="highlight-box">
+      <strong>¿Qué son los valores SHAP?</strong> Los valores SHAP (SHapley Additive exPlanations) cuantifican la contribución de cada variable a la predicción del modelo. Un valor SHAP positivo aumenta el riesgo predicho; un valor negativo lo disminuye. Basados en la teoría de juegos cooperativos (Lundberg & Lee, 2017).
+    </div>
+    <div id="shapGlobal"></div>
+  </div>
+
+  <div class="card">
+    <h2>🧑‍🎓 Explicación Local — Estudiante Ejemplo (ID: UAQ0023)</h2>
+    <p style="font-size:0.82rem; color:#666; margin-bottom:16px;">
+      ¿Por qué el modelo predice un riesgo del 78% para este estudiante?
+    </p>
+    <div id="shapLocal"></div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 6: ARQUITECTURA -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="tab-arquitectura" class="tab-content">
+
+  <div class="card">
+    <h2>⚙️ Arquitectura del Sistema Completo</h2>
+    <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:12px; align-items:start; margin-bottom:20px;">
+      <div class="arch-box blue" style="grid-row:span 2;">
+        <div class="arch-icon">🖥️</div>
+        <div class="arch-title">Frontend</div>
+        <div class="arch-sub">React.js<br>Tailwind CSS<br>Chart.js<br>SHAP Plots</div>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:center; font-size:2rem; color:#aaa; grid-row:span 2;">⟷</div>
+      <div class="arch-box orange" style="grid-row:span 2;">
+        <div class="arch-icon">⚡</div>
+        <div class="arch-title">Backend</div>
+        <div class="arch-sub">FastAPI (Python)<br>REST API<br>Auth JWT<br>CORS</div>
+      </div>
+      <div style="display:flex; align-items:center; justify-content:center; font-size:2rem; color:#aaa; grid-row:span 2;">⟷</div>
+      <div>
+        <div class="arch-box purple" style="margin-bottom:10px;">
+          <div class="arch-icon">🤖</div>
+          <div class="arch-title">Modelo ML</div>
+          <div class="arch-sub">Stacking Ensemble<br>RF + XGB + GB → FNN<br>SHAP Explainer</div>
+        </div>
+        <div class="arch-box" style="border-color:#16a085; background:#e8f8f5;">
+          <div class="arch-icon">🗄️</div>
+          <div class="arch-title">Base de Datos</div>
+          <div class="arch-sub">PostgreSQL<br>Respuestas instrumento<br>Historial académico</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <h3>🔗 Endpoints API (FastAPI)</h3>
+      <div style="font-family: monospace; font-size:0.82rem; line-height:1.9; color:#333;">
+        <div><span style="color:#27ae60;background:#eafaf1;padding:1px 5px;border-radius:3px;">POST</span> /api/v1/predict</div>
+        <div><span style="color:#27ae60;background:#eafaf1;padding:1px 5px;border-radius:3px;">POST</span> /api/v1/instrument/submit</div>
+        <div><span style="color:#3498db;background:#e8f4fd;padding:1px 5px;border-radius:3px;">GET</span>  /api/v1/students/risk-list</div>
+        <div><span style="color:#3498db;background:#e8f4fd;padding:1px 5px;border-radius:3px;">GET</span>  /api/v1/shap/{student_id}</div>
+        <div><span style="color:#3498db;background:#e8f4fd;padding:1px 5px;border-radius:3px;">GET</span>  /api/v1/dashboard/summary</div>
+        <div><span style="color:#e67e22;background:#fef9e7;padding:1px 5px;border-radius:3px;">PUT</span>  /api/v1/students/{id}/status</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🚀 Deploy (Academic Demo)</h3>
+      <div style="font-size:0.83rem; line-height:1.8; color:#444;">
+        <div>🐳 <strong>Docker</strong> — Contenedor único</div>
+        <div>🌐 <strong>Railway.app</strong> — Free tier disponible</div>
+        <div>📦 <strong>GitHub Actions</strong> — CI/CD automático</div>
+        <div>🔒 <strong>HTTPS</strong> — Certificado auto Let's Encrypt</div>
+        <div>📊 <strong>DB</strong> — SQLite para prototipo<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PostgreSQL para producción</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📦 Stack Tecnológico</h3>
+      <div style="font-size:0.83rem; line-height:1.8; color:#444;">
+        <div>🐍 Python 3.11 + FastAPI 0.104</div>
+        <div>⚛️  React 18 + Vite + Tailwind</div>
+        <div>🤖 scikit-learn 1.3 + XGBoost 2.0</div>
+        <div>🔍 SHAP 0.44 (TreeExplainer)</div>
+        <div>📊 Chart.js 4.4 + D3.js</div>
+        <div>🔐 JWT + OAuth2 (fastapi-security)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>📋 Plan de Deploy para Presentación ante Sínodo</h3>
+    <div style="font-size:0.85rem; line-height:1.9; color:#444;">
+      <p style="margin-bottom:12px;">Los siguientes pasos permiten desplegar el prototipo en internet en menos de 30 minutos:</p>
+      <ol style="padding-left:20px; line-height:2.2;">
+        <li>Entrenar y serializar el modelo: <code style="background:#f0f4f8;padding:2px 7px;border-radius:3px;">joblib.dump(stacking_model, 'model.pkl')</code></li>
+        <li>Construir la imagen Docker: <code style="background:#f0f4f8;padding:2px 7px;border-radius:3px;">docker build -t sat-uaq .</code></li>
+        <li>Crear cuenta en <strong>Railway.app</strong> (gratuita) y conectar repositorio GitHub</li>
+        <li>Railway detecta el Dockerfile automáticamente y hace el deploy</li>
+        <li>Compartir la URL con sínodo y directora: <code style="background:#f0f4f8;padding:2px 7px;border-radius:3px;">https://sat-uaq.up.railway.app</code></li>
+      </ol>
+      <p style="margin-top:12px; color:var(--accent); font-weight:600;">
+        ➡️  Tiempo estimado de deploy: 20–30 minutos · Costo: $0 (Railway free tier)
+      </p>
+    </div>
+  </div>
+
+</div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// DATOS DEMO (reemplazar con llamadas a FastAPI en producción)
+// ═══════════════════════════════════════════════════════════
+
+const DIMENSIONES = [
+  'Bienestar Emocional',
+  'Autopercepción Académica',
+  'Motivación y Compromiso',
+  'Resiliencia Académica',
+  'Relaciones Interpersonales',
+  'Afiliación Institucional'
+];
+
+const ITEMS_MUESTRA = {
+  'Bienestar Emocional': [
+    'Me siento emocionalmente estable durante el semestre',
+    'Puedo manejar el estrés académico sin que afecte mi vida cotidiana',
+    'Me siento satisfecho/a con mi experiencia en la universidad',
+    'Tengo energía suficiente para cumplir con mis responsabilidades académicas',
+    'Cuando enfrento problemas académicos, logro mantener la calma'
+  ],
+  'Autopercepción Académica': [
+    'Creo que tengo las capacidades necesarias para terminar mi carrera',
+    'Me considero un estudiante competente en mi área de conocimiento',
+    'Confío en mi capacidad para superar los retos académicos difíciles',
+    'Me siento orgulloso/a de mis logros académicos hasta ahora',
+    'Creo que tengo habilidades que me distinguen como estudiante'
+  ],
+  'Motivación y Compromiso': [
+    'Estoy comprometido/a con terminar mis estudios universitarios',
+    'Siento que lo que aprendo en la universidad es relevante para mi futuro',
+    'Me esfuerzo más allá de los requisitos mínimos de cada materia',
+    'Tengo metas claras que me motivan a continuar con mis estudios',
+    'Me involucro activamente en las actividades académicas del semestre'
+  ],
+  'Resiliencia Académica': [
+    'Cuando repruebo una materia, encuentro la manera de recuperarme y seguir adelante',
+    'Aprendo de mis errores académicos y los uso para mejorar',
+    'Ante las dificultades en la escuela, busco soluciones en lugar de rendirme',
+    'Puedo adaptarme a los cambios en mi trayectoria académica sin perder el rumbo',
+    'Los fracasos académicos me motivan a esforzarme más, no a abandonar'
+  ],
+  'Relaciones Interpersonales': [
+    'Tengo compañeros en los que puedo apoyarme durante situaciones difíciles',
+    'Me llevo bien con mis profesores y puedo acercarme a ellos cuando lo necesito',
+    'Siento que pertenezco a la comunidad estudiantil de mi facultad',
+    'Tengo amigos en la universidad con quienes comparto intereses académicos',
+    'Las relaciones que he construido en la universidad enriquecen mi experiencia'
+  ],
+  'Afiliación Institucional': [
+    'Me identifico con los valores de mi institución educativa',
+    'Estoy satisfecho/a con los servicios académicos que ofrece la universidad',
+    'Conozco y aprovecho los recursos de apoyo estudiantil disponibles',
+    'Siento que la institución se preocupa por el bienestar de sus estudiantes',
+    'Recomendaría mi institución a estudiantes de preparatoria'
+  ]
+};
+
+const MODELOS_DATA = {
+  headers: ['Random Forest', 'XGBoost', 'Gradient Boosting', 'FNN', 'Stacking Ensemble'],
+  accuracy:  [0.8412, 0.8631, 0.8523, 0.8287, 0.8847],
+  precision: [0.8124, 0.8390, 0.8218, 0.8045, 0.8712],
+  recall:    [0.7934, 0.8142, 0.8011, 0.7823, 0.8498],
+  f1:        [0.8028, 0.8264, 0.8113, 0.7932, 0.8603],
+  auc:       [0.8721, 0.8934, 0.8812, 0.8543, 0.9134],
+};
+
+const SHAP_GLOBAL = [
+  { var: 'Motivación y Compromiso',      shap: 0.184, color: '#e74c3c' },
+  { var: 'Autopercepción Académica',     shap: 0.168, color: '#e74c3c' },
+  { var: 'Bienestar Emocional',          shap: 0.152, color: '#e74c3c' },
+  { var: 'Promedio Acumulado',           shap: 0.143, color: '#e74c3c' },
+  { var: 'Resiliencia Académica',        shap: 0.128, color: '#e67e22' },
+  { var: 'Materias Reprobadas',          shap: 0.094, color: '#e67e22' },
+  { var: 'Afiliación Institucional',     shap: 0.071, color: '#f39c12' },
+  { var: 'Relaciones Interpersonales',   shap: 0.058, color: '#f39c12' },
+  { var: 'Trabaja (Sí/No)',              shap: 0.038, color: '#27ae60' },
+  { var: 'Carga Académica Actual',       shap: 0.029, color: '#27ae60' },
+  { var: 'Nivel Educativo Padres',       shap: 0.019, color: '#27ae60' },
+  { var: 'Semestre',                     shap: 0.012, color: '#3498db' },
+];
+
+const SHAP_LOCAL = [
+  { var: 'Motivación y Compromiso = 1.8',    shap: +0.28, dir: 'pos' },
+  { var: 'Promedio Acumulado = 6.3',         shap: +0.21, dir: 'pos' },
+  { var: 'Autopercepción Académica = 2.1',   shap: +0.18, dir: 'pos' },
+  { var: 'Materias Reprobadas = 4',          shap: +0.15, dir: 'pos' },
+  { var: 'Bienestar Emocional = 2.4',        shap: +0.12, dir: 'pos' },
+  { var: 'Relaciones Interpersonales = 3.8', shap: -0.09, dir: 'neg' },
+  { var: 'Trabaja = Sí',                     shap: +0.07, dir: 'pos' },
+  { var: 'Afiliación Institucional = 2.6',   shap: +0.06, dir: 'pos' },
+  { var: 'Carga Académica = 3 materias',     shap: +0.05, dir: 'pos' },
+  { var: 'Resiliencia Académica = 2.9',      shap: +0.03, dir: 'pos' },
+];
+
+const STUDENTS_DEMO = [
+  { id: 'UAQ0023', area: 'Ingeniería', sem: 3, prom: 6.3, risk: 78, riskClass: 'high', dimCrit: 'Motivación', interv: '⚠️ Urgente' },
+  { id: 'UAQ0041', area: 'Sociales',  sem: 4, prom: 6.8, risk: 71, riskClass: 'high', dimCrit: 'Bienestar Emocional', interv: '⚠️ Urgente' },
+  { id: 'UAQ0078', area: 'Salud',     sem: 2, prom: 7.1, risk: 65, riskClass: 'high', dimCrit: 'Autopercepción', interv: '⚠️ Urgente' },
+  { id: 'UAQ0112', area: 'Exactas',   sem: 5, prom: 7.4, risk: 58, riskClass: 'medium', dimCrit: 'Resiliencia', interv: '📅 Programar' },
+  { id: 'UAQ0089', area: 'Humanidades',sem:3, prom: 7.9, risk: 52, riskClass: 'medium', dimCrit: 'Afiliación', interv: '📅 Programar' },
+  { id: 'UAQ0156', area: 'Ingeniería', sem: 1, prom: 8.1, risk: 43, riskClass: 'medium', dimCrit: 'Motivación', interv: '📋 Seguimiento' },
+];
+
+// ═══════════════════════════════════════════════════════════
+// INICIALIZACIÓN
+// ═══════════════════════════════════════════════════════════
+
+function showTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// Dashboard charts
+function initDashboard() {
+  // Radar chart
+  new Chart(document.getElementById('radarChart'), {
+    type: 'radar',
+    data: {
+      labels: DIMENSIONES.map(d => d.split(' ').slice(0,2).join(' ')),
+      datasets: [
+        {
+          label: 'Estudiantes en Riesgo Alto',
+          data: [2.4, 2.3, 2.1, 2.6, 3.1, 2.5],
+          backgroundColor: 'rgba(231,76,60,0.2)',
+          borderColor: '#e74c3c', pointBackgroundColor: '#e74c3c', borderWidth: 2
+        },
+        {
+          label: 'Media Institucional',
+          data: [3.7, 3.8, 3.9, 3.6, 3.8, 3.5],
+          backgroundColor: 'rgba(52,152,219,0.15)',
+          borderColor: '#3498db', pointBackgroundColor: '#3498db', borderWidth: 2
+        }
+      ]
+    },
+    options: { scales: { r: { min: 1, max: 5, ticks: { stepSize: 1 } } }, plugins: { legend: { position: 'bottom' } } }
+  });
+
+  // Bar chart
+  new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Ingeniería', 'Sociales', 'Salud', 'Humanidades', 'Exactas'],
+      datasets: [{
+        label: 'En Riesgo Alto',
+        data: [14, 11, 8, 7, 7],
+        backgroundColor: ['#e74c3c','#e67e22','#f1c40f','#9b59b6','#3498db'],
+        borderRadius: 5
+      }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
+
+  // Students table
+  const tbody = document.getElementById('studentsTable');
+  STUDENTS_DEMO.forEach(s => {
+    const cls = s.riskClass === 'high' ? 'badge-high' : 'badge-medium';
+    tbody.innerHTML += `
+      <tr>
+        <td><strong>${s.id}</strong></td>
+        <td>${s.area}</td>
+        <td>${s.sem}°</td>
+        <td>${s.prom}</td>
+        <td><span class="badge ${cls}">${s.risk}% ${s.riskClass === 'high' ? '▲' : '●'}</span></td>
+        <td>${s.dimCrit}</td>
+        <td><span style="font-size:0.82rem">${s.interv}</span></td>
+      </tr>`;
+  });
+}
+
+// Instrument form
+function initInstrument() {
+  const container = document.getElementById('instrumentForm');
+  let html = '';
+  let itemNum = 1;
+  Object.entries(ITEMS_MUESTRA).forEach(([dim, items]) => {
+    html += `<div class="form-section">
+      <h3>Dimensión: ${dim} (Ítems ${itemNum}–${itemNum+items.length-1} de 165)</h3>`;
+    items.forEach((q, i) => {
+      const id = `item_${dim.replace(/\s/g,'_')}_${i}`;
+      html += `<div class="likert-item">
+        <div class="q-text"><strong>${itemNum++}.</strong> ${q}</div>
+        <div class="likert-options">`;
+      [1,2,3,4,5].forEach(v => {
+        const labels = ['1\nTotalmente\nen desacuerdo','2\nEn\ndesacuerdo','3\nNi de acuerdo\nni en desacuerdo','4\nDe\nacuerdo','5\nTotalmente\nde acuerdo'];
+        html += `<input type="radio" name="${id}" id="${id}_${v}" value="${v}">
+                 <label for="${id}_${v}">${v}<br><small style="font-size:0.7rem;line-height:1.2;display:block">${['TD','D','N','A','TA'][v-1]}</small></label>`;
+      });
+      html += `</div></div>`;
+    });
+    html += `<p style="font-size:0.78rem;color:#999;margin-top:6px;">
+      (...${28-items.length} ítems adicionales de esta dimensión en el instrumento completo)</p>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+// Calculate risk
+function calcularRiesgo() {
+  // Simular predicción (en producción: llamar a /api/v1/predict)
+  const dimScores = DIMENSIONES.map(() => Math.random() * 1.5 + 2.0);
+  const riskScore = Math.round(40 + Math.random() * 45);
+  updatePrediction(riskScore, dimScores);
+  showTab('prediccion');
+  document.querySelectorAll('.tab-btn')[2].classList.add('active');
+  document.querySelectorAll('.tab-btn')[1].classList.remove('active');
+}
+
+function updatePrediction(score, dimScores) {
+  document.getElementById('riskScore').textContent = score + '%';
+  const label = document.getElementById('riskLabel');
+  if (score >= 65) {
+    document.getElementById('riskScore').style.color = '#c0392b';
+    label.textContent = 'RIESGO ALTO';
+    label.className = 'risk-label risk-high';
+  } else if (score >= 40) {
+    document.getElementById('riskScore').style.color = '#e67e22';
+    label.textContent = 'RIESGO MEDIO';
+    label.className = 'risk-label risk-medium';
+  } else {
+    document.getElementById('riskScore').style.color = '#27ae60';
+    label.textContent = 'RIESGO BAJO';
+    label.className = 'risk-label risk-low';
+  }
+
+  // Gauge canvas
+  const canvas = document.getElementById('gaugeCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 220, 130);
+  const cx = 110, cy = 120, r = 90;
+  const angle = Math.PI * (score / 100);
+
+  // Background arc
+  ctx.beginPath(); ctx.arc(cx, cy, r, Math.PI, 0, false);
+  ctx.lineWidth = 18; ctx.strokeStyle = '#e9ecef'; ctx.stroke();
+
+  // Color arc
+  const grad = ctx.createLinearGradient(20, 0, 200, 0);
+  grad.addColorStop(0, '#27ae60'); grad.addColorStop(0.5, '#e67e22'); grad.addColorStop(1, '#e74c3c');
+  ctx.beginPath(); ctx.arc(cx, cy, r, Math.PI, Math.PI + angle, false);
+  ctx.lineWidth = 18; ctx.strokeStyle = grad; ctx.stroke();
+
+  // Needle
+  const needleAngle = Math.PI + angle;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + (r-15) * Math.cos(needleAngle), cy + (r-15) * Math.sin(needleAngle));
+  ctx.lineWidth = 3; ctx.strokeStyle = '#2c3e50'; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, 7, 0, 2*Math.PI);
+  ctx.fillStyle = '#2c3e50'; ctx.fill();
+
+  // Dimension profile
+  const profileDiv = document.getElementById('dimProfile');
+  profileDiv.innerHTML = '';
+  DIMENSIONES.forEach((dim, i) => {
+    const score_norm = dimScores[i];
+    const pct = Math.round(((score_norm - 1) / 4) * 100);
+    const color = pct < 45 ? '#e74c3c' : pct < 65 ? '#e67e22' : '#27ae60';
+    profileDiv.innerHTML += `
+      <div class="dim-row">
+        <div class="dim-label"><span>${dim}</span><span style="color:${color};font-weight:600">${score_norm.toFixed(2)}/5.0</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div>
+      </div>`;
+  });
+
+  // Recommendations
+  const recoDiv = document.getElementById('recomendaciones');
+  const intervencion = score >= 65 ? [
+    '🔴 <strong>Reunión urgente con orientador académico</strong> — Contactar al estudiante en los próximos 3 días hábiles.',
+    '📚 <strong>Plan de regularización académica</strong> — Revisar historial de materias reprobadas y diseñar plan personalizado.',
+    '💪 <strong>Taller de Motivación y Compromiso</strong> — Inscripción prioritaria al programa de fortalecimiento motivacional.',
+    '🏥 <strong>Derivación a apoyo psicológico</strong> — Si el Bienestar Emocional está por debajo de 2.5, canalizar al servicio de salud mental.',
+    '💰 <strong>Revisión de opciones de apoyo económico</strong> — Verificar elegibilidad para beca de permanencia o servicio social compensado.'
+  ] : [
+    '🟡 <strong>Seguimiento mensual</strong> — Monitorear avance académico durante el semestre actual.',
+    '📋 <strong>Autoevaluación a mitad de semestre</strong> — Reaplicar el instrumento en la semana 8.',
+    '💬 <strong>Sesión de orientación vocacional</strong> — Reforzar claridad de metas académicas y profesionales.',
+  ];
+
+  recoDiv.innerHTML = '<ul style="list-style:none;line-height:2.2;font-size:0.87rem">' +
+    intervencion.map(r => `<li>• ${r}</li>`).join('') + '</ul>';
+}
+
+// Models comparison
+function initModelos() {
+  const tbody = document.getElementById('metricsTable');
+  MODELOS_DATA.headers.forEach((modelo, i) => {
+    const isStacking = i === 4;
+    const row = `<tr ${isStacking ? 'style="background:#fff5f5;"' : ''}>
+      <td><strong ${isStacking ? 'style="color:#c0392b"' : ''}>${isStacking ? '🏆 ' : ''}${modelo}</strong></td>
+      <td class="${isStacking?'winner':''}">${MODELOS_DATA.accuracy[i].toFixed(4)}</td>
+      <td class="${isStacking?'winner':''}">${MODELOS_DATA.precision[i].toFixed(4)}</td>
+      <td class="${isStacking?'winner':''}">${MODELOS_DATA.recall[i].toFixed(4)}</td>
+      <td class="${isStacking?'winner':''}">${MODELOS_DATA.f1[i].toFixed(4)}</td>
+      <td class="${isStacking?'winner':''}">${MODELOS_DATA.auc[i].toFixed(4)}</td>
+    </tr>`;
+    tbody.innerHTML += row;
+  });
+
+  const COLORS = ['#3498db','#e67e22','#9b59b6','#1abc9c','#e74c3c'];
+
+  new Chart(document.getElementById('aucChart'), {
+    type: 'bar',
+    data: {
+      labels: MODELOS_DATA.headers,
+      datasets: [{ label: 'AUC-ROC', data: MODELOS_DATA.auc, backgroundColor: COLORS, borderRadius: 5 }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { min: 0.80, max: 0.95, ticks: { stepSize: 0.02 } } },
+      animation: { duration: 800 }
+    }
+  });
+
+  new Chart(document.getElementById('f1Chart'), {
+    type: 'bar',
+    data: {
+      labels: MODELOS_DATA.headers,
+      datasets: [{ label: 'F1-Score', data: MODELOS_DATA.f1, backgroundColor: COLORS, borderRadius: 5 }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { min: 0.75, max: 0.90, ticks: { stepSize: 0.02 } } },
+      animation: { duration: 800 }
+    }
+  });
+
+  // Synthetic ROC curves
+  const rocCtx = document.getElementById('rocChart').getContext('2d');
+  function makeROC(auc, n=50) {
+    const xs = Array.from({length: n}, (_, i) => i/(n-1));
+    const ys = xs.map(x => {
+      const base = x < 0.2 ? x * 3 : 0.6 + (x - 0.2) * 0.5;
+      return Math.min(1, base * (auc / 0.85) + (Math.random() - 0.5) * 0.02);
+    });
+    return { xs: [0, ...xs, 1], ys: [0, ...ys, 1] };
+  }
+  const rocData = MODELOS_DATA.headers.map((h, i) => {
+    const { xs, ys } = makeROC(MODELOS_DATA.auc[i]);
+    return {
+      label: `${h} (${MODELOS_DATA.auc[i].toFixed(3)})`,
+      data: xs.map((x, j) => ({ x, y: ys[j] })),
+      borderColor: COLORS[i], borderWidth: i === 4 ? 3 : 1.5,
+      fill: false, pointRadius: 0, tension: 0.3
+    };
+  });
+  new Chart(rocCtx, {
+    type: 'line',
+    data: {
+      datasets: [
+        ...rocData,
+        { label: 'Aleatorio', data: [{x:0,y:0},{x:1,y:1}], borderColor:'#ccc', borderDash:[5,5], borderWidth:1, pointRadius:0, fill:false }
+      ]
+    },
+    options: {
+      parsing: false,
+      scales: { x: { type:'linear', min:0, max:1, title:{ display:true, text:'Tasa de Falsos Positivos (1 - Especificidad)' } },
+                y: { min:0, max:1, title:{ display:true, text:'Tasa de Verdaderos Positivos (Sensibilidad)' } } },
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+}
+
+// SHAP
+function initSHAP() {
+  const globalDiv = document.getElementById('shapGlobal');
+  const maxVal = SHAP_GLOBAL[0].shap;
+  globalDiv.innerHTML = SHAP_GLOBAL.map(s => `
+    <div class="shap-bar-container">
+      <div class="shap-label">${s.var}</div>
+      <div class="shap-bar-track">
+        <div class="shap-bar-fill" style="width:${(s.shap/maxVal)*100}%;background:${s.color}"></div>
+      </div>
+      <div class="shap-val">+${s.shap.toFixed(3)}</div>
+    </div>`).join('');
+
+  const localDiv = document.getElementById('shapLocal');
+  const maxLocal = Math.max(...SHAP_LOCAL.map(s => Math.abs(s.shap)));
+  localDiv.innerHTML = `
+    <div class="highlight-box" style="margin-bottom:16px">
+      <strong>Base value:</strong> 0.284 (media de la muestra) &nbsp;|&nbsp;
+      <strong>Predicción final:</strong> 0.78 (riesgo 78%)
+    </div>` +
+    SHAP_LOCAL.map(s => {
+      const color = s.dir === 'pos' ? '#e74c3c' : '#27ae60';
+      const sign  = s.dir === 'pos' ? '+' : '';
+      return `
+        <div class="shap-bar-container">
+          <div class="shap-label">${s.var}</div>
+          <div class="shap-bar-track">
+            <div class="shap-bar-fill" style="width:${(Math.abs(s.shap)/maxLocal)*100}%;background:${color}"></div>
+          </div>
+          <div class="shap-val" style="color:${color};font-weight:600">${sign}${s.shap.toFixed(2)}</div>
+        </div>`;
+    }).join('');
+}
+
+// Boot everything
+window.addEventListener('DOMContentLoaded', () => {
+  initDashboard();
+  initInstrument();
+  initModelos();
+  initSHAP();
+  // Init prediction with defaults
+  const defaultScores = [2.4, 2.1, 1.8, 2.6, 3.1, 2.6];
+  updatePrediction(72, defaultScores);
+});
+</script>
+</body>
+</html>

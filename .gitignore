@@ -1,0 +1,45 @@
+# Datos sensibles — NUNCA subir
+*.xlsx
+*.csv
+credentials.json
+*.env
+.env.*
+secrets/
+
+# Datos de estudiantes
+*_alumnos*
+*_estudiantes*
+*_datos_reales*
+
+# macOS
+.DS_Store
+__MACOSX/
+*.localized
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Modelos entrenados (binarios grandes)
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.pth
+models/
+
+# Archivos temporales
+~$*
+*.tmp

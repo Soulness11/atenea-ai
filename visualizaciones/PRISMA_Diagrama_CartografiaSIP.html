@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagrama PRISMA 2020 — Cartografía Conceptual SIP</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Georgia, serif; background: #FAFAF8; color: #1a1a1a; padding: 32px 24px; }
+
+  .page-title { text-align: center; margin-bottom: 6px; }
+  .page-title h1 { font-size: 18px; font-weight: bold; color: #1B5E20; }
+  .page-title p { font-size: 13px; color: #555; margin-top: 4px; font-style: italic; }
+  .page-title .caption { font-size: 12px; color: #777; margin-top: 8px; }
+
+  .legend { display: flex; gap: 20px; justify-content: center; margin: 18px 0 28px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #444; }
+  .legend-dot { width: 14px; height: 14px; border-radius: 2px; }
+
+  /* ── layout ── */
+  .prisma { display: flex; flex-direction: column; align-items: center; gap: 0; width: 100%; max-width: 860px; margin: 0 auto; }
+
+  .row { display: flex; align-items: flex-start; justify-content: center; width: 100%; gap: 0; }
+  .row.phase-label-row { margin-bottom: -4px; }
+
+  /* ── phase labels on left ── */
+  .phase-col { width: 110px; min-width: 110px; display: flex; flex-direction: column; align-items: center; padding-top: 10px; }
+  .phase-badge { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); font-size: 10px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 6px; border-radius: 4px; }
+  .phase-search  { background: #E3F2FD; color: #0D47A1; border: 1px solid #90CAF9; }
+  .phase-screen  { background: #F3E5F5; color: #4A148C; border: 1px solid #CE93D8; }
+  .phase-eligible{ background: #FFF8E1; color: #E65100; border: 1px solid #FFD54F; }
+  .phase-include { background: #E8F5E9; color: #1B5E20; border: 1px solid #A5D6A7; }
+
+  /* ── boxes ── */
+  .main-col { display: flex; flex-direction: column; align-items: center; flex: 1; }
+  .excl-col  { width: 220px; min-width: 220px; display: flex; flex-direction: column; align-items: center; }
+
+  .box {
+    border-radius: 6px; padding: 12px 16px; text-align: center;
+    font-size: 13px; line-height: 1.5; position: relative;
+    width: 100%;
+  }
+  .box-search  { background: #E3F2FD; border: 1.5px solid #1565C0; }
+  .box-screen  { background: #F3E5F5; border: 1.5px solid #6A1B9A; }
+  .box-eligible{ background: #FFF8E1; border: 1.5px solid #E65100; }
+  .box-include { background: #E8F5E9; border: 1.5px solid #2E7D32; }
+  .box-exclude { background: #FFEBEE; border: 1.5px solid #C62828; font-size: 12px; text-align: left; }
+  .box-exclude ul { margin: 6px 0 0 14px; }
+  .box-exclude ul li { margin-bottom: 3px; }
+
+  .box .n { font-size: 22px; font-weight: bold; display: block; margin: 4px 0 2px; }
+  .box .label { font-size: 11px; color: #555; }
+  .box .sublabel { font-size: 12px; margin-top: 4px; }
+  .box-search .n  { color: #0D47A1; }
+  .box-screen .n  { color: #4A148C; }
+  .box-eligible .n{ color: #E65100; }
+  .box-include .n { color: #1B5E20; }
+
+  .box-title { font-size: 13px; font-weight: bold; margin-bottom: 4px; }
+
+  /* ── connectors ── */
+  .arrow-down { display: flex; justify-content: center; height: 28px; align-items: center; }
+  .arrow-down svg { display: block; }
+
+  .arrow-right { display: flex; align-items: center; height: 40px; width: 40px; justify-content: center; }
+  .arrow-right svg { display: block; }
+
+  .search-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 0; }
+  .search-grid .box { font-size: 12px; }
+  .terms-box { background: #F0F7FF; border: 1px dashed #1565C0; border-radius: 6px; padding: 10px 14px; font-size: 12px; margin-top: 12px; width: 100%; }
+  .terms-box strong { display: block; margin-bottom: 4px; color: #1565C0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .terms-box .term { display: inline-block; background: #BBDEFB; border-radius: 10px; padding: 2px 8px; margin: 2px; font-size: 11px; color: #0D47A1; }
+
+  .criteria-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
+  .crit-box { border-radius: 5px; padding: 10px 12px; font-size: 12px; }
+  .crit-inc { background: #E8F5E9; border: 1px solid #66BB6A; }
+  .crit-exc { background: #FFEBEE; border: 1px solid #EF5350; }
+  .crit-box strong { display: block; margin-bottom: 6px; font-size: 11px; letter-spacing: 0.5px; }
+  .crit-box li { margin-left: 14px; margin-bottom: 3px; }
+  .crit-inc strong { color: #1B5E20; }
+  .crit-exc strong { color: #B71C1C; }
+
+  .final-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .section-title { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: #888; margin: 20px 0 10px; text-align: center; width: 100%; }
+
+  .separator { width: 100%; border: none; border-top: 1.5px dashed #ccc; margin: 28px 0; }
+
+  @media print {
+    body { background: white; }
+    .no-print { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-title">
+  <h1>Figura 1. Diagrama de flujo de selección documental — PRISMA 2020</h1>
+  <p>Cartografía Conceptual: Sistema Instrumental Psicotécnico (SIP)</p>
+  <p class="caption">Basado en: Page et al. (2021) · Tobón (2012) · Escudero-Nahón (2021) · Luis Pardo, DTE-UAQ, 2026</p>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#E3F2FD;border:1.5px solid #1565C0"></div>Fase de identificación</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#F3E5F5;border:1.5px solid #6A1B9A"></div>Fase de cribado</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#FFF8E1;border:1.5px solid #E65100"></div>Fase de elegibilidad</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#E8F5E9;border:1.5px solid #2E7D32"></div>Fase de inclusión</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#FFEBEE;border:1.5px solid #C62828"></div>Excluidos</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- FASE 1: IDENTIFICACIÓN -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+
+<div class="section-title">FASE 1 — IDENTIFICACIÓN</div>
+
+<div class="search-grid" style="max-width:860px;margin:0 auto 12px;">
+  <div class="box box-search">
+    <div class="box-title">🔍 Research Rabbit</div>
+    <span class="n" contenteditable="true" title="Haz clic para editar">n = ?</span>
+    <span class="label">registros encontrados</span>
+  </div>
+  <div class="box box-search">
+    <div class="box-title">🔍 Scopus</div>
+    <span class="n" contenteditable="true" title="Haz clic para editar">n = ?</span>
+    <span class="label">registros encontrados</span>
+  </div>
+  <div class="box box-search">
+    <div class="box-title">🔍 Web of Science</div>
+    <span class="n" contenteditable="true" title="Haz clic para editar">n = ?</span>
+    <span class="label">registros encontrados</span>
+  </div>
+</div>
+
+<div style="max-width:860px;margin:0 auto;">
+  <div class="terms-box">
+    <strong>Términos de búsqueda booleana</strong>
+    <span class="term">'psychotechnical'</span>
+    <span class="term">'instrument-mediated activity'</span>
+    <span class="term">'activity theory'</span>
+    <span class="term">'educational technology'</span>
+    <span class="term">'dropout prediction'</span>
+    <span class="term">'posthumanism education'</span>
+    <span style="font-size:11px;color:#555;display:block;margin-top:6px;">Periodo: 2000–2026 · Idiomas: inglés, español · Tipos: artículos, capítulos, libros</span>
+  </div>
+</div>
+
+<div class="arrow-down" style="margin-top:12px;">
+  <svg width="24" height="28"><line x1="12" y1="0" x2="12" y2="20" stroke="#555" stroke-width="2"/><polygon points="6,18 18,18 12,26" fill="#555"/></svg>
+</div>
+
+<div style="max-width:500px;margin:0 auto;">
+  <div class="box box-search">
+    <div class="box-title">Total de registros identificados (sin duplicados)</div>
+    <span class="n" contenteditable="true" title="Haz clic para editar">n = ?</span>
+    <span class="label">tras eliminar duplicados entre bases de datos</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- FASE 2: CRIBADO + CRITERIOS -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+
+<div class="arrow-down">
+  <svg width="24" height="28"><line x1="12" y1="0" x2="12" y2="20" stroke="#555" stroke-width="2"/><polygon points="6,18 18,18 12,26" fill="#555"/></svg>
+</div>
+
+<div class="section-title">FASE 2 — CRIBADO Y CRITERIOS DE INCLUSIÓN/EXCLUSIÓN</div>
+
+<div style="max-width:860px;margin:0 auto 12px;">
+  <div class="criteria-grid">
+    <div class="crit-box crit-inc">
+      <strong>✓ CRITERIOS DE INCLUSIÓN</strong>
+      <ul>
+        <li>Publicado entre 2000 y 2026</li>
+        <li>Idioma inglés o español</li>
+        <li>Acceso abierto o disponibilidad institucional</li>
+        <li>Enfoque en psicología educativa, tecnología educativa o ML aplicado a educación</li>
+        <li>Relevancia directa para la conceptualización del SIP</li>
+        <li>Tipo: artículo empírico/teórico, capítulo de libro o libro especializado</li>
+      </ul>
+    </div>
+    <div class="crit-box crit-exc">
+      <strong>✗ CRITERIOS DE EXCLUSIÓN</strong>
+      <ul>
+        <li>Revisiones de libros y comentarios editoriales</li>
+        <li>Publicaciones sin datos verificables</li>
+        <li>Sin metodología explícita o clara</li>
+        <li>Abordaje periférico o incidental del SIP</li>
+        <li>Fuera del rango temporal 2000–2026</li>
+        <li>Idioma distinto al inglés o español</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div style="max-width:860px;margin:0 auto;display:flex;gap:16px;align-items:flex-start;">
+  <!-- main flow -->
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+    <div class="arrow-down">
+      <svg width="24" height="28"><line x1="12" y1="0" x2="12" y2="20" stroke="#555" stroke-width="2"/><polygon points="6,18 18,18 12,26" fill="#555"/></svg>
+    </div>
+    <div class="box box-screen" style="width:100%;">
+      <div class="box-title">Registros cribados por título y resumen</div>
+      <span class="n" contenteditable="true" title="Haz clic para editar">n = ?</span>
+      <span class="label">evaluados para selección inicial</span>
+    </div>
+    <div class="arrow-down">
+      <svg width="24" height="28"><line x1="12" y1="0" x2="12" y2="20" stroke="#555" stroke-width="2"/><polygon points="6,18 18,18 12,26" fill="#555"/></svg>
+    </div>
+    <div class="box box-screen" style="width:100%;">
+      <div class="box-title">Registros retenidos para lectura completa</div>
+      <span class="n" contenteditable="true" title="Haz clic para editar">n = ?</span>
+      <span class="label">pasaron cribado inicial</span>
+    </div>
+  </div>
+  <!-- excluded right -->
+  <div style="width:220px;display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:28px;">
+    <div class="box box-exclude" style="width:100%;">
+      <strong style="color:#B71C1C;font-size:12px;">✗ Excluidos en cribado</strong>
+      <span class="n" style="font-size:18px;color:#B71C1C;" contenteditable="true">n = ?</span>
+      <ul style="font-size:11px;margin-top:4px;">
+        <li>Fuera de rango temporal</li>
+        <li>Idioma no pertinente</li>
+        <li>Sin acceso</li>
+        <li>Título/resumen no relevante</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- FASE 3: ELEGIBILIDAD -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+
+<div class="arrow-down">
+  <svg width="24" height="28"><line x1="12" y1="0" x2="12" y2="20" stroke="#555" stroke-width="2"/><polygon points="6,18 18,18 12,26" fill="#555"/></svg>
+</div>
+
+<div class="section-title">FASE 3 — ELEGIBILIDAD</div>
+
+<div style="max-width:860px;margin:0 auto;display:flex;gap:16px;align-items:flex-start;">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+    <div class="box box-eligible" style="width:100%;">
+      <div class="box-title">Evaluados para elegibilidad (texto completo)</div>
+      <span class="n" contenteditable="true" title="Haz clic para editar">n = ?</span>
+      <span class="label">leídos completos para elegibilidad</span>
+    </div>
+  </div>
+  <div style="width:220px;display:flex;flex-direction:column;align-items:center;">
+    <div class="box box-exclude" style="width:100%;margin-top:0;">
+      <strong style="color:#B71C1C;font-size:12px;">✗ Excluidos en elegibilidad</strong>
+      <span class="n" style="font-size:18px;color:#B71C1C;" contenteditable="true">n = ?</span>
+      <ul style="font-size:11px;margin-top:4px;">
+        <li>Revisión de libro / comentario editorial</li>
+        <li>Sin metodología verificable</li>
+        <li>Abordaje periférico del SIP</li>
+        <li>Duplicado no detectado en fase anterior</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- FASE 4: INCLUSIÓN -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+
+<div class="arrow-down">
+  <svg width="24" height="28"><line x1="12" y1="0" x2="12" y2="20" stroke="#555" stroke-width="2"/><polygon points="6,18 18,18 12,26" fill="#555"/></svg>
+</div>
+
+<div class="section-title">FASE 4 — INCLUSIÓN</div>
+
+<div style="max-width:860px;margin:0 auto;">
+  <div class="final-grid">
+    <div class="box box-include">
+      <div class="box-title">📄 Artículos de investigación incluidos</div>
+      <span class="n" contenteditable="true" title="Haz clic para editar">n = ?</span>
+      <span class="sublabel">Artículos empíricos y teóricos</span>
+      <span class="label" style="margin-top:6px;display:block;font-size:11px;">ML en educación · Psicología educativa<br>Tecnología educativa · Deserción escolar</span>
+    </div>
+    <div class="box box-include">
+      <div class="box-title">📚 Libros y capítulos incluidos</div>
+      <span class="n" contenteditable="true" title="Haz clic para editar">n = ?</span>
+      <span class="sublabel">Libros especializados y capítulos</span>
+      <span class="label" style="margin-top:6px;display:block;font-size:11px;">Teoría de la Actividad · Posthumanismo<br>Cartografía conceptual · Instrumentos</span>
+    </div>
+  </div>
+
+  <div class="arrow-down" style="margin:12px 0 8px;">
+    <svg width="24" height="28"><line x1="12" y1="0" x2="12" y2="20" stroke="#555" stroke-width="2"/><polygon points="6,18 18,18 12,26" fill="#555"/></svg>
+  </div>
+
+  <div class="box box-include" style="border-width:2.5px;">
+    <div class="box-title" style="font-size:15px;">✅ CORPUS DOCUMENTAL FINAL</div>
+    <span class="n" style="font-size:28px;" contenteditable="true" title="Haz clic para editar">n = ?</span>
+    <span class="sublabel">documentos para análisis por los 8 ejes de Tobón (2004/2012)</span>
+    <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;font-size:12px;">
+      <span style="background:#C8E6C9;padding:3px 10px;border-radius:10px;color:#1B5E20;">Artículos = ?</span>
+      <span style="background:#C8E6C9;padding:3px 10px;border-radius:10px;color:#1B5E20;">Libros/Caps = ?</span>
+    </div>
+  </div>
+</div>
+
+<hr class="separator">
+
+<div style="max-width:860px;margin:0 auto;font-size:12px;color:#555;line-height:1.7;">
+  <strong>Nota.</strong> Los campos marcados con <em>n = ?</em> son valores placeholder — el autor debe sustituirlos con los conteos reales obtenidos de Research Rabbit, Scopus y Web of Science. Los campos son editables: haz clic sobre cualquier valor <em>n = ?</em> para modificarlo directamente en el navegador. Diagrama elaborado siguiendo los lineamientos de Page et al. (2021). <em>The PRISMA 2020 statement: An updated guideline for reporting systematic reviews. The BMJ, 372</em>, n71. https://doi.org/10.1136/bmj.n71
+</div>
+
+<div style="text-align:right;margin-top:20px;font-size:11px;color:#aaa;font-style:italic;">
+  Generado por Lumina Labstech / Claude · DTE-UAQ · Abril 2026
+</div>
+
+</body>
+</html>
