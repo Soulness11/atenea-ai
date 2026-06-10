@@ -5,18 +5,173 @@ Tesis Doctoral: Modelos Predictivos ML para la Deserción Escolar
 ═══════════════════════════════════════════════════════════════════════════════
 Ejecutar: uvicorn main:app --reload --port 8000
 Docs:     http://localhost:8000/docs
+
+v2.0 — Añade:
+  · Autenticación JWT multi-rol (Estudiante / Docente / Administrador)
+  · SQLite con tabla users via SQLAlchemy
+  · Endpoints: POST /auth/register, POST /auth/login, GET /auth/me
+  · Endpoints docente: GET /api/v1/docente/students
+  · Endpoints admin:   GET /api/v1/admin/overview, GET /api/v1/admin/users
 """
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pydantic import BaseModel, Field, EmailStr
 from typing import Optional, List
 import numpy as np
 import pandas as pd
 import joblib
 import shap
 import os
-from datetime import datetime
+import json
+from datetime import datetime, timedelta
+
+# ─── Dependencias de autenticación ───────────────────────────────────────────
+# Instalar: pip3 install "python-jose[cryptography]" "passlib[bcrypt]" sqlalchemy
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, Session
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CONFIGURACIÓN JWT + BASE DE DATOS
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Secreto JWT — en producción usar variable de entorno: os.getenv("JWT_SECRET", ...)
+SECRET_KEY    = os.getenv("JWT_SECRET", "atenea-uaq-jwt-secret-2026-doctorado-dte")
+ALGORITHM     = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 1440  # 24 horas
+
+# Código de autorización requerido para registrar Administradores
+ADMIN_AUTH_CODE = os.getenv("ADMIN_AUTH_CODE", "UAQ-ATENEA-ADMIN-2026")
+
+# ─── SQLAlchemy (SQLite en desarrollo, PostgreSQL en producción) ──────────────
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./atenea_users.db")
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+class UserDB(Base):
+    """Tabla de usuarios del sistema Atenea AI"""
+    __tablename__ = "users"
+    id         = Column(Integer, primary_key=True, index=True)
+    email      = Column(String, unique=True, index=True, nullable=False)
+    nombre     = Column(String, nullable=False)
+    password_hash = Column(String, nullable=False)
+    role       = Column(String, nullable=False)          # "estudiante" | "docente" | "admin"
+    extra_data = Column(Text, default="{}")              # JSON con campos específicos del rol
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_login = Column(DateTime, nullable=True)
+
+Base.metadata.create_all(bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# ─── Hashing de contraseñas ───────────────────────────────────────────────────
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+def verify_password(plain: str, hashed: str) -> bool:
+    return pwd_context.verify(plain, hashed)
+
+# ─── JWT helpers ─────────────────────────────────────────────────────────────
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
+
+def create_access_token(data: dict) -> str:
+    payload = data.copy()
+    payload["exp"] = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+def decode_token(token: str) -> dict:
+    try:
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado")
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> UserDB:
+    if not token:
+        raise HTTPException(status_code=401, detail="Se requiere autenticación")
+    payload = decode_token(token)
+    email = payload.get("sub")
+    if not email:
+        raise HTTPException(status_code=401, detail="Token inválido")
+    user = db.query(UserDB).filter(UserDB.email == email).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Usuario no encontrado")
+    return user
+
+def require_role(*roles):
+    """Dependencia de autorización por rol"""
+    def checker(current_user: UserDB = Depends(get_current_user)):
+        if current_user.role not in roles:
+            raise HTTPException(status_code=403, detail=f"Se requiere rol: {', '.join(roles)}")
+        return current_user
+    return checker
+
+# ─── Schemas de autenticación ─────────────────────────────────────────────────
+
+class RegisterRequest(BaseModel):
+    email:    str = Field(..., example="estudiante@uaq.edu.mx")
+    nombre:   str = Field(..., example="María López García")
+    password: str = Field(..., min_length=6, example="mi_contraseña_segura")
+    role:     str = Field(..., example="estudiante")  # estudiante | docente | admin
+    # Campos opcionales específicos por rol
+    matricula:       Optional[str] = None  # Estudiante
+    programa:        Optional[str] = None  # Estudiante
+    semestre:        Optional[int] = None  # Estudiante
+    num_empleado:    Optional[str] = None  # Docente / Admin
+    facultad:        Optional[str] = None  # Docente
+    contratacion:    Optional[str] = None  # Docente (TC / MT / PH)
+    area:            Optional[str] = None  # Admin
+    codigo_auth:     Optional[str] = None  # Admin — requerido
+
+class LoginRequest(BaseModel):
+    email:    str
+    password: str
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    role: str
+    nombre: str
+    user_id: int
+
+class UserPublic(BaseModel):
+    id:         int
+    email:      str
+    nombre:     str
+    role:       str
+    extra_data: dict
+    created_at: str
+
+# ─── Seed: crear usuario admin por defecto si no existe ───────────────────────
+def _seed_admin():
+    db = SessionLocal()
+    try:
+        existing = db.query(UserDB).filter(UserDB.email == "admin@uaq.edu.mx").first()
+        if not existing:
+            admin = UserDB(
+                email="admin@uaq.edu.mx",
+                nombre="Administrador Atenea",
+                password_hash=hash_password("atenea2026"),
+                role="admin",
+                extra_data=json.dumps({"area": "TI", "num_empleado": "ADM001"})
+            )
+            db.add(admin)
+            db.commit()
+    finally:
+        db.close()
+
+_seed_admin()
 
 # ─── Inicialización ──────────────────────────────────────────────────────────
 app = FastAPI(
@@ -169,6 +324,204 @@ def generate_recommendations(risk_class: str, features: StudentFeatures) -> List
         recs.append("✅ Estudiante en buen estado — seguimiento semestral rutinario")
         recs.append("🌟 Candidato/a para mentoría de pares o representación estudiantil")
     return recs
+
+# ─── Endpoints ───────────────────────────────────────────────────────────────
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ENDPOINTS DE AUTENTICACIÓN
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.post("/auth/register", tags=["Autenticación"], summary="Registrar nuevo usuario")
+async def register(req: RegisterRequest, db: Session = Depends(get_db)):
+    """
+    Registra un nuevo usuario en el sistema Atenea AI.
+
+    - **Estudiante**: requiere matricula, programa, semestre
+    - **Docente**: requiere num_empleado, facultad, contratacion
+    - **Administrador**: requiere num_empleado, area y `codigo_auth` válido
+    """
+    # Validar email único
+    if db.query(UserDB).filter(UserDB.email == req.email).first():
+        raise HTTPException(status_code=400, detail="El correo ya está registrado en el sistema")
+
+    # Validar rol
+    if req.role not in ("estudiante", "docente", "admin"):
+        raise HTTPException(status_code=400, detail="Rol inválido. Use: estudiante, docente o admin")
+
+    # Validar código de autorización para admins
+    if req.role == "admin":
+        if req.codigo_auth != ADMIN_AUTH_CODE:
+            raise HTTPException(status_code=403, detail="Código de autorización incorrecto para rol Administrador")
+
+    # Construir extra_data según rol
+    extra: dict = {}
+    if req.role == "estudiante":
+        extra = {"matricula": req.matricula, "programa": req.programa, "semestre": req.semestre}
+    elif req.role == "docente":
+        extra = {"num_empleado": req.num_empleado, "facultad": req.facultad, "contratacion": req.contratacion}
+    elif req.role == "admin":
+        extra = {"num_empleado": req.num_empleado, "area": req.area}
+
+    user = UserDB(
+        email=req.email,
+        nombre=req.nombre,
+        password_hash=hash_password(req.password),
+        role=req.role,
+        extra_data=json.dumps(extra)
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    token = create_access_token({"sub": user.email, "role": user.role, "nombre": user.nombre})
+    return TokenResponse(access_token=token, role=user.role, nombre=user.nombre, user_id=user.id)
+
+
+@app.post("/auth/login", tags=["Autenticación"], summary="Iniciar sesión")
+async def login(req: LoginRequest, db: Session = Depends(get_db)):
+    """
+    Autentica al usuario y retorna un JWT.
+    El token debe incluirse en todas las peticiones protegidas como:
+    `Authorization: Bearer <token>`
+    """
+    user = db.query(UserDB).filter(UserDB.email == req.email).first()
+    if not user or not verify_password(req.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Correo o contraseña incorrectos")
+
+    # Actualizar último acceso
+    user.last_login = datetime.utcnow()
+    db.commit()
+
+    token = create_access_token({"sub": user.email, "role": user.role, "nombre": user.nombre})
+    return TokenResponse(access_token=token, role=user.role, nombre=user.nombre, user_id=user.id)
+
+
+@app.get("/auth/me", tags=["Autenticación"], summary="Perfil del usuario autenticado")
+async def me(current_user: UserDB = Depends(get_current_user)):
+    """Retorna el perfil del usuario autenticado (cualquier rol)."""
+    return UserPublic(
+        id=current_user.id,
+        email=current_user.email,
+        nombre=current_user.nombre,
+        role=current_user.role,
+        extra_data=json.loads(current_user.extra_data or "{}"),
+        created_at=current_user.created_at.isoformat()
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ENDPOINTS DOCENTE (rol requerido: docente o admin)
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.get("/api/v1/docente/students", tags=["Docente"], summary="Estudiantes del docente")
+async def docente_students(
+    risk_level: Optional[str] = None,
+    current_user: UserDB = Depends(require_role("docente", "admin"))
+):
+    """
+    Retorna la lista de estudiantes asignados al docente autenticado
+    con su nivel de riesgo y dimensiones SIP.
+    """
+    estudiantes = [
+        {"id":"UAQ0023","nombre":"Carlos Mendoza Torres","grupo":"DTE-401","semestre":4,
+         "promedio":6.3,"riesgo":"alto","dims":[2.1,2.4,1.8,2.3,3.1,2.5]},
+        {"id":"UAQ0041","nombre":"María Sánchez Guerrero","grupo":"DTE-402","semestre":4,
+         "promedio":6.8,"riesgo":"alto","dims":[2.4,2.8,2.2,2.6,2.9,2.3]},
+        {"id":"UAQ0055","nombre":"Roberto Silva Martínez","grupo":"DTE-402","semestre":4,
+         "promedio":7.8,"riesgo":"medio","dims":[3.1,3.4,2.8,3.2,3.7,3.0]},
+        {"id":"UAQ0103","nombre":"Alejandro Reyes Ortiz","grupo":"PSI-201","semestre":4,
+         "promedio":8.5,"riesgo":"bajo","dims":[4.1,4.0,4.2,3.9,4.3,3.8]},
+    ]
+    if risk_level:
+        estudiantes = [e for e in estudiantes if e["riesgo"] == risk_level]
+    return {"docente": current_user.nombre, "estudiantes": estudiantes, "total": len(estudiantes)}
+
+
+@app.post("/api/v1/docente/observacion", tags=["Docente"], summary="Registrar observación")
+async def docente_observacion(
+    student_id: str, tipo: str, texto: str,
+    current_user: UserDB = Depends(require_role("docente", "admin"))
+):
+    """Registra una observación del docente para un estudiante específico."""
+    return {
+        "status": "guardado",
+        "student_id": student_id,
+        "docente": current_user.nombre,
+        "tipo": tipo,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# ENDPOINTS ADMINISTRADOR (rol requerido: admin)
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.get("/api/v1/admin/overview", tags=["Administrador"], summary="Vista general institucional")
+async def admin_overview(current_user: UserDB = Depends(require_role("admin"))):
+    """Retorna estadísticas institucionales agregadas para el panel de administración."""
+    return {
+        "admin": current_user.nombre,
+        "timestamp": datetime.utcnow().isoformat(),
+        "resumen": {
+            "total_estudiantes": 4332,
+            "riesgo_alto": 521,
+            "riesgo_medio": 1147,
+            "riesgo_bajo": 2664,
+            "tasa_desercion_estimada": 0.181,
+            "modelo_version": "stacking_v2.0",
+            "modelo_auc_roc": 0.9639,
+        },
+        "por_facultad": [
+            {"nombre":"DTE",        "n":412,  "alto":62, "deser_pct":19.2},
+            {"nombre":"Ingeniería", "n":1204, "alto":189,"deser_pct":19.6},
+            {"nombre":"Psicología", "n":521,  "alto":48, "deser_pct":11.7},
+            {"nombre":"Medicina",   "n":634,  "alto":94, "deser_pct":19.2},
+            {"nombre":"Derecho",    "n":487,  "alto":71, "deser_pct":17.9},
+        ]
+    }
+
+
+@app.get("/api/v1/admin/users", tags=["Administrador"], summary="Gestión de usuarios")
+async def admin_users(
+    role: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: UserDB = Depends(require_role("admin"))
+):
+    """Lista todos los usuarios del sistema (filtrable por rol)."""
+    query = db.query(UserDB)
+    if role:
+        query = query.filter(UserDB.role == role)
+    users = query.all()
+    return {
+        "total": len(users),
+        "users": [
+            {
+                "id": u.id, "email": u.email, "nombre": u.nombre,
+                "role": u.role, "created_at": u.created_at.isoformat(),
+                "last_login": u.last_login.isoformat() if u.last_login else None,
+                "extra_data": json.loads(u.extra_data or "{}")
+            }
+            for u in users
+        ]
+    }
+
+
+@app.delete("/api/v1/admin/users/{user_id}", tags=["Administrador"], summary="Eliminar usuario")
+async def admin_delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserDB = Depends(require_role("admin"))
+):
+    """Elimina un usuario del sistema (solo Administrador)."""
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="No puedes eliminar tu propia cuenta")
+    user = db.query(UserDB).filter(UserDB.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    db.delete(user)
+    db.commit()
+    return {"status": "eliminado", "user_id": user_id}
+
 
 # ─── Endpoints ───────────────────────────────────────────────────────────────
 

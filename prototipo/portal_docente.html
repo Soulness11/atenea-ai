@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal Docente — Sistema Atenea AI | UAQ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #1a3a5c; --accent: #2980b9; --teal: #16a085; --orange: #e67e22;
+    --success: #27ae60; --warning: #e67e22; --danger: #c0392b; --violet: #8e44ad;
+    --bg: #f0f4f8; --card: #fff; --text: #2c3e50; --muted: #7f8c8d;
+    --border: #dce1e7; --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+  header {
+    background: linear-gradient(135deg, #1a3a5c 0%, #27619e 60%, #e67e22 100%);
+    color: white;
+  }
+  .header-inner {
+    max-width: 1280px; margin: 0 auto; padding: 16px 28px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .logo { font-size: 26px; }
+  .header-title h1 { font-size: 1.2rem; font-weight: 700; }
+  .header-title p  { font-size: 0.78rem; opacity: 0.8; margin-top: 2px; }
+  .header-user { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .user-avatar { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+    border: 2px solid rgba(255,255,255,0.35); }
+  .user-name { font-size: 0.88rem; font-weight: 600; }
+  .user-sub  { font-size: 0.75rem; opacity: 0.75; }
+  .logout-btn {
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+    color: white; border-radius: 8px; padding: 6px 14px; font-size: 0.8rem;
+    cursor: pointer; text-decoration: none; transition: background 0.2s;
+  }
+  .logout-btn:hover { background: rgba(255,255,255,0.25); }
+
+  nav { background: var(--primary); border-bottom: 3px solid var(--orange); }
+  .nav-inner { max-width: 1280px; margin: 0 auto; padding: 0 28px; display: flex; gap: 2px; }
+  .tab-btn {
+    background: none; border: none; color: rgba(255,255,255,0.6);
+    padding: 12px 18px; cursor: pointer; font-size: 0.86rem;
+    border-bottom: 3px solid transparent; margin-bottom: -3px;
+    transition: all 0.2s; display: flex; align-items: center; gap: 7px;
+  }
+  .tab-btn:hover { color: white; }
+  .tab-btn.active { color: white; border-bottom-color: var(--orange); font-weight: 600; }
+
+  .badge-count {
+    background: var(--danger); color: white; border-radius: 10px;
+    padding: 1px 7px; font-size: 0.7rem; font-weight: 700;
+  }
+
+  main { max-width: 1280px; margin: 0 auto; padding: 24px 28px 40px; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Cards */
+  .card { background: var(--card); border-radius: 14px; padding: 22px 24px;
+    box-shadow: var(--shadow); border: 1px solid var(--border); }
+  .card-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px; }
+
+  /* KPI Grid */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 22px; }
+  .kpi-card { border-radius: 14px; padding: 18px 20px; border: 1px solid var(--border); background: white; box-shadow: var(--shadow); }
+  .kpi-val  { font-size: 2.2rem; font-weight: 800; line-height: 1; margin-bottom: 3px; }
+  .kpi-lbl  { font-size: 0.8rem; color: var(--muted); }
+  .kpi-sub  { font-size: 0.76rem; margin-top: 8px; display: flex; align-items: center; gap: 4px; }
+  .kpi-sub.up   { color: var(--success); }
+  .kpi-sub.down { color: var(--danger); }
+  .kpi-sub.warn { color: var(--warning); }
+
+  /* Alert strip */
+  .alert-strip {
+    background: linear-gradient(135deg, #fdecea, #fff5f5);
+    border: 1.5px solid #f5c6cb; border-radius: 14px; padding: 18px 22px;
+    margin-bottom: 22px; display: flex; align-items: center; gap: 16px;
+  }
+  .alert-strip-icon { font-size: 2rem; flex-shrink: 0; }
+  .alert-strip h3  { font-size: 1rem; font-weight: 700; color: var(--danger); margin-bottom: 3px; }
+  .alert-strip p   { font-size: 0.83rem; color: #555; line-height: 1.5; }
+  .alert-strip-btn {
+    margin-left: auto; background: var(--danger); color: white; border: none;
+    border-radius: 10px; padding: 10px 20px; font-weight: 700; font-size: 0.85rem;
+    cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  }
+
+  /* Grid layouts */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 22px; }
+
+  /* Tabla estudiantes */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+  th { padding: 10px 14px; text-align: left; background: #f8f9fa; color: var(--muted);
+    font-weight: 600; border-bottom: 2px solid var(--border); font-size: 0.78rem;
+    text-transform: uppercase; letter-spacing: 0.05em; }
+  td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:hover td { background: #f8f9fb; }
+  tr.high-risk td { background: #fff8f8; }
+
+  /* Risk badges */
+  .risk-badge {
+    display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px;
+    border-radius: 12px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;
+  }
+  .risk-alto  { background: #fdecea; color: var(--danger); }
+  .risk-medio { background: #fef9e7; color: #d68910; }
+  .risk-bajo  { background: #d4f4e2; color: #1e8449; }
+
+  /* Dim mini bars */
+  .dim-mini { display: flex; gap: 3px; align-items: center; }
+  .dim-dot  { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* Botones acción */
+  .btn-action {
+    padding: 5px 12px; border-radius: 7px; border: 1.5px solid var(--border);
+    font-size: 0.76rem; font-weight: 600; cursor: pointer; background: white;
+    color: var(--text); transition: all 0.18s;
+  }
+  .btn-action:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-action.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* Filtros */
+  .filter-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-bar input, .filter-bar select {
+    padding: 8px 12px; border-radius: 9px; border: 1.5px solid var(--border);
+    font-size: 0.83rem; background: white; color: var(--text); font-family: inherit;
+  }
+  .filter-bar input { flex: 1; min-width: 200px; }
+  .filter-bar input:focus, .filter-bar select:focus { outline: none; border-color: var(--accent); }
+
+  /* Grupos cards */
+  .grupo-card {
+    border-radius: 12px; padding: 18px; border: 1.5px solid var(--border); background: white;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .grupo-card:hover { border-color: var(--orange); box-shadow: var(--shadow); }
+  .grupo-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+  .grupo-icon { font-size: 1.8rem; }
+  .grupo-name { font-size: 0.95rem; font-weight: 700; margin-bottom: 2px; }
+  .grupo-meta { font-size: 0.77rem; color: var(--muted); }
+  .grupo-risk-bar { height: 8px; border-radius: 4px; overflow: hidden; display: flex; gap: 2px; margin-bottom: 8px; }
+  .grupo-risk-seg { height: 100%; border-radius: 2px; transition: width 0.8s; }
+  .grupo-stats { display: flex; gap: 10px; font-size: 0.76rem; }
+  .grupo-stat { display: flex; align-items: center; gap: 4px; }
+
+  /* Observaciones */
+  .obs-form textarea {
+    width: 100%; padding: 10px 14px; border-radius: 10px; border: 1.5px solid var(--border);
+    font-size: 0.84rem; font-family: inherit; resize: vertical; min-height: 80px;
+  }
+  .obs-form textarea:focus { outline: none; border-color: var(--accent); }
+  .obs-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+  .obs-item { background: #f8f9fa; border-radius: 8px; padding: 12px 14px; font-size: 0.82rem; line-height: 1.5; border-left: 3px solid var(--orange); }
+  .obs-meta { font-size: 0.74rem; color: var(--muted); margin-top: 4px; }
+
+  /* Gráfica */
+  .chart-wrap { height: 240px; position: relative; }
+
+  @media(max-width:900px) {
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">🦉</div>
+    <div class="header-title">
+      <h1>Sistema Atenea AI — Portal Docente</h1>
+      <p>Seguimiento de estudiantes y detección temprana de riesgo</p>
+    </div>
+    <div class="header-user">
+      <div>
+        <div class="user-name" id="userName">Dra. Ana García López</div>
+        <div class="user-sub">DTE · Tiempo Completo</div>
+      </div>
+      <div class="user-avatar">👩‍🏫</div>
+      <a class="logout-btn" href="login.html">← Salir</a>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <div class="nav-inner">
+    <button class="tab-btn active" onclick="showTab('dashboard',this)">🏠 Dashboard</button>
+    <button class="tab-btn" onclick="showTab('grupos',this)">📚 Mis Grupos</button>
+    <button class="tab-btn" onclick="showTab('estudiantes',this)">👥 Mis Estudiantes</button>
+    <button class="tab-btn" onclick="showTab('alertas',this)">
+      🚨 Alertas <span class="badge-count" id="alertCount">4</span>
+    </button>
+    <button class="tab-btn" onclick="showTab('observaciones',this)">📝 Mis Observaciones</button>
+    <button class="tab-btn" onclick="showTab('reportes',this)">📊 Reportes</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ═══ TAB 1 — DASHBOARD ═══ -->
+<div id="tab-dashboard" class="tab-panel active">
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-val" style="color:var(--accent)">87</div>
+      <div class="kpi-lbl">Estudiantes totales</div>
+      <div class="kpi-sub">En tus 4 grupos activos</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" style="color:var(--danger)">7</div>
+      <div class="kpi-lbl">Riesgo alto</div>
+      <div class="kpi-sub down">▲ +2 respecto al semestre anterior</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" style="color:var(--warning)">18</div>
+      <div class="kpi-lbl">Riesgo medio</div>
+      <div class="kpi-sub warn">Requieren seguimiento mensual</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" style="color:var(--success)">62</div>
+      <div class="kpi-lbl">Riesgo bajo</div>
+      <div class="kpi-sub up">▲ +5 mejoraron este semestre</div>
+    </div>
+  </div>
+
+  <!-- Alerta urgente -->
+  <div class="alert-strip" id="alertStrip">
+    <div class="alert-strip-icon">🚨</div>
+    <div>
+      <h3>4 estudiantes requieren atención inmediata</h3>
+      <p>Los estudiantes <strong>UAQ0023, UAQ0041, UAQ0078 y UAQ0092</strong> han presentado una caída
+         significativa en Motivación y Bienestar Emocional en los últimos 30 días.
+         Se recomienda contacto directo esta semana.</p>
+    </div>
+    <button class="alert-strip-btn" onclick="showTab('alertas', document.querySelectorAll('.tab-btn')[3])">
+      Ver Alertas →
+    </button>
+  </div>
+
+  <!-- Gráficas -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">📊 Distribución de riesgo por grupo</div>
+      <div class="chart-wrap"><canvas id="riskByGroupChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📈 Evolución del riesgo — Semestre 2026-A</div>
+      <div class="chart-wrap"><canvas id="riskEvolutionChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Dimensión más crítica -->
+  <div class="card">
+    <div class="card-title">⚠️ Dimensiones más críticas en tus grupos (promedio)</div>
+    <div id="criticalDims" style="display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-top:4px"></div>
+  </div>
+
+</div>
+
+
+<!-- ═══ TAB 2 — GRUPOS ═══ -->
+<div id="tab-grupos" class="tab-panel">
+  <div class="grid-2" id="gruposGrid"></div>
+</div>
+
+
+<!-- ═══ TAB 3 — ESTUDIANTES ═══ -->
+<div id="tab-estudiantes" class="tab-panel">
+  <div class="filter-bar">
+    <input type="text" id="searchInput" placeholder="🔍 Buscar por nombre o matrícula..." oninput="filterTable()">
+    <select id="filterRisk" onchange="filterTable()">
+      <option value="">Todos los niveles de riesgo</option>
+      <option value="alto">🔴 Riesgo alto</option>
+      <option value="medio">🟡 Riesgo medio</option>
+      <option value="bajo">🟢 Riesgo bajo</option>
+    </select>
+    <select id="filterGrupo" onchange="filterTable()">
+      <option value="">Todos los grupos</option>
+      <option value="DTE-401">DTE-401</option>
+      <option value="DTE-402">DTE-402</option>
+      <option value="ING-301">ING-301</option>
+      <option value="PSI-201">PSI-201</option>
+    </select>
+    <button style="padding:8px 16px;background:var(--teal);color:white;border:none;border-radius:9px;font-size:0.83rem;font-weight:600;cursor:pointer" onclick="exportReport()">
+      ⬇️ Exportar CSV
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table id="estudiantesTable">
+        <thead>
+          <tr>
+            <th>Estudiante</th>
+            <th>Matrícula</th>
+            <th>Grupo</th>
+            <th>Semestre</th>
+            <th>Promedio</th>
+            <th>D1</th><th>D2</th><th>D3</th><th>D4</th><th>D5</th><th>D6</th>
+            <th>Riesgo</th>
+            <th>Última eval.</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="estudiantesBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ TAB 4 — ALERTAS ═══ -->
+<div id="tab-alertas" class="tab-panel">
+  <div id="alertasList" style="display:flex;flex-direction:column;gap:14px"></div>
+</div>
+
+
+<!-- ═══ TAB 5 — OBSERVACIONES ═══ -->
+<div id="tab-observaciones" class="tab-panel">
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">📝 Nueva Observación</div>
+      <div class="obs-form">
+        <div style="margin-bottom:12px">
+          <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:6px">Estudiante</label>
+          <select style="width:100%;padding:8px 12px;border-radius:9px;border:1.5px solid var(--border);font-family:inherit;font-size:0.83rem">
+            <option>UAQ0023 — Carlos Mendoza</option>
+            <option>UAQ0041 — María Sánchez</option>
+            <option>UAQ0078 — Jorge Ramírez</option>
+          </select>
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:6px">Tipo de observación</label>
+          <select style="width:100%;padding:8px 12px;border-radius:9px;border:1.5px solid var(--border);font-family:inherit;font-size:0.83rem">
+            <option>📋 Académica</option>
+            <option>❤️ Emocional / Bienestar</option>
+            <option>🤝 Relaciones / Social</option>
+            <option>⚡ Urgente — Derivar a CAPSI</option>
+          </select>
+        </div>
+        <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:6px">Observación</label>
+        <textarea id="obsTexto" placeholder="Describe lo que observaste — esta nota es confidencial y solo visible para orientadores y el equipo de apoyo..."></textarea>
+        <button onclick="addObservacion()" style="margin-top:12px;background:var(--orange);color:white;border:none;border-radius:10px;padding:10px 22px;font-weight:700;cursor:pointer;font-size:0.87rem">
+          Guardar Observación
+        </button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Mis Observaciones Recientes</div>
+      <div class="obs-list" id="obsList"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ TAB 6 — REPORTES ═══ -->
+<div id="tab-reportes" class="tab-panel">
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">📊 Dimensiones promedio — Mis grupos</div>
+      <div class="chart-wrap"><canvas id="dimPromedioChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🎯 Estilos de aprendizaje en mis grupos</div>
+      <div class="chart-wrap"><canvas id="estilosGrupoChart"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">📥 Exportar Reportes</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:4px">
+      <div style="padding:14px;border:1px solid var(--border);border-radius:10px;text-align:center;cursor:pointer" onclick="alert('Generando reporte PDF...')">
+        <div style="font-size:1.8rem;margin-bottom:8px">📄</div>
+        <div style="font-weight:700;font-size:0.88rem;margin-bottom:4px">Reporte por Estudiante</div>
+        <div style="font-size:0.76rem;color:var(--muted)">Ficha individual con SHAP y recomendaciones</div>
+      </div>
+      <div style="padding:14px;border:1px solid var(--border);border-radius:10px;text-align:center;cursor:pointer" onclick="alert('Generando reporte de grupo...')">
+        <div style="font-size:1.8rem;margin-bottom:8px">📊</div>
+        <div style="font-weight:700;font-size:0.88rem;margin-bottom:4px">Reporte de Grupo</div>
+        <div style="font-size:0.76rem;color:var(--muted)">Distribución de riesgo y dimensiones grupales</div>
+      </div>
+      <div style="padding:14px;border:1px solid var(--border);border-radius:10px;text-align:center;cursor:pointer" onclick="alert('Exportando CSV...')">
+        <div style="font-size:1.8rem;margin-bottom:8px">📋</div>
+        <div style="font-weight:700;font-size:0.88rem;margin-bottom:4px">Exportar CSV</div>
+        <div style="font-size:0.76rem;color:var(--muted)">Datos completos para análisis propio</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────
+const GRUPOS = [
+  { id:'DTE-401', nombre:'Seminario de Investigación I', area:'DTE', semestre:4, n:22,
+    alto:2, medio:5, bajo:15,
+    dims: [3.8, 3.6, 3.9, 3.5, 4.1, 3.3] },
+  { id:'DTE-402', nombre:'Tecnología Educativa Avanzada', area:'DTE', semestre:4, n:18,
+    alto:3, medio:4, bajo:11,
+    dims: [3.2, 3.4, 3.1, 3.0, 3.8, 3.1] },
+  { id:'ING-301', nombre:'Metodología de la Investigación', area:'Ingeniería', semestre:6, n:31,
+    alto:1, medio:7, bajo:23,
+    dims: [3.9, 4.0, 4.2, 3.8, 3.6, 3.5] },
+  { id:'PSI-201', nombre:'Psicología Educativa', area:'Psicología', semestre:4, n:16,
+    alto:1, medio:2, bajo:13,
+    dims: [4.2, 4.1, 4.3, 4.0, 4.4, 3.9] },
+];
+
+const DIM_NOMBRES = ['D1 Bienestar','D2 Autopercepción','D3 Motivación','D4 Resiliencia','D5 Relaciones','D6 Afiliación'];
+const DIM_COLORS  = ['#e74c3c','#3498db','#f39c12','#27ae60','#9b59b6','#1abc9c'];
+
+const ESTUDIANTES = [
+  { id:'UAQ0023', nombre:'Carlos Mendoza Torres',   grupo:'DTE-401', sem:4, prom:6.3, d:[2.1,2.4,1.8,2.3,3.1,2.5], riesgo:'alto',  fecha:'15 Mar' },
+  { id:'UAQ0041', nombre:'María Sánchez Guerrero',  grupo:'DTE-402', sem:4, prom:6.8, d:[2.4,2.8,2.2,2.6,2.9,2.3], riesgo:'alto',  fecha:'14 Mar' },
+  { id:'UAQ0078', nombre:'Jorge Ramírez Flores',    grupo:'ING-301', sem:6, prom:7.1, d:[2.6,3.0,2.5,2.8,3.4,2.7], riesgo:'alto',  fecha:'16 Mar' },
+  { id:'UAQ0092', nombre:'Diana López Hernández',   grupo:'DTE-401', sem:4, prom:5.9, d:[2.0,2.2,2.0,2.1,2.8,2.0], riesgo:'alto',  fecha:'13 Mar' },
+  { id:'UAQ0055', nombre:'Roberto Silva Martínez',  grupo:'DTE-402', sem:4, prom:7.8, d:[3.1,3.4,2.8,3.2,3.7,3.0], riesgo:'medio', fecha:'15 Mar' },
+  { id:'UAQ0067', nombre:'Fernanda Torres Vega',    grupo:'ING-301', sem:6, prom:8.1, d:[3.5,3.8,3.6,3.4,4.0,3.3], riesgo:'medio', fecha:'14 Mar' },
+  { id:'UAQ0103', nombre:'Alejandro Reyes Ortiz',   grupo:'PSI-201', sem:4, prom:8.5, d:[4.1,4.0,4.2,3.9,4.3,3.8], riesgo:'bajo',  fecha:'15 Mar' },
+  { id:'UAQ0118', nombre:'Patricia Mora Castillo',  grupo:'DTE-401', sem:4, prom:8.9, d:[4.3,4.2,4.5,4.1,4.4,4.0], riesgo:'bajo',  fecha:'16 Mar' },
+  { id:'UAQ0131', nombre:'Luis Herrera Mendoza',    grupo:'ING-301', sem:6, prom:7.5, d:[3.8,3.6,3.7,3.5,3.9,3.4], riesgo:'bajo',  fecha:'15 Mar' },
+  { id:'UAQ0145', nombre:'Sofía Vázquez Campos',    grupo:'PSI-201', sem:4, prom:9.1, d:[4.5,4.4,4.6,4.3,4.6,4.2], riesgo:'bajo',  fecha:'14 Mar' },
+];
+
+const ALERTAS = [
+  { estudiante:'UAQ0023 — Carlos Mendoza', grupo:'DTE-401', tipo:'Caída crítica en Motivación',
+    desc:'Su D3 (Motivación) bajó de 3.1 a 1.8 en los últimos 30 días. Esto combinado con promedio de 6.3 indica riesgo inminente de abandono.',
+    urgencia:'alta', fecha:'Hoy, 08:30', icon:'🔴' },
+  { estudiante:'UAQ0041 — María Sánchez', grupo:'DTE-402', tipo:'Bajo bienestar emocional persistente',
+    desc:'D1 (Bienestar) ha estado por debajo de 2.5 tres semanas consecutivas. La tendencia no muestra recuperación.',
+    urgencia:'alta', fecha:'Ayer, 15:45', icon:'🔴' },
+  { estudiante:'UAQ0078 — Jorge Ramírez', grupo:'ING-301', tipo:'Declive en Afiliación Institucional',
+    desc:'D6 bajó 0.8 puntos en el último mes. Ha faltado a 3 sesiones consecutivas.',
+    urgencia:'alta', fecha:'Hace 2 días', icon:'🔴' },
+  { estudiante:'UAQ0092 — Diana López', grupo:'DTE-401', tipo:'Múltiples dimensiones críticas',
+    desc:'5 de 6 dimensiones están por debajo de 2.5. Probabilidad de abandono: 85%. Se recomienda intervención inmediata.',
+    urgencia:'critica', fecha:'Hace 3 días', icon:'⚠️' },
+];
+
+const OBSERVACIONES_DEMO = [
+  { est:'Carlos Mendoza', tipo:'❤️ Emocional', texto:'Comentó sentirse agobiado con la carga de trabajo del doctorado. Mencionó pensar en posponer el semestre.', fecha:'16 Mar 2026, 10:15' },
+  { est:'María Sánchez',  tipo:'📋 Académica',  texto:'No entregó el segundo avance de tesis. Dice tener problemas familiares. Se le dio prórroga de 1 semana.', fecha:'15 Mar 2026, 14:30' },
+];
+
+// ─── RENDERS ──────────────────────────────────────────────
+function renderGrupos() {
+  document.getElementById('gruposGrid').innerHTML = GRUPOS.map(g => {
+    const total = g.alto + g.medio + g.bajo;
+    const pAlto  = (g.alto / total * 100).toFixed(0);
+    const pMedio = (g.medio/ total * 100).toFixed(0);
+    const pBajo  = (g.bajo / total * 100).toFixed(0);
+    return `<div class="grupo-card">
+      <div class="grupo-header">
+        <div class="grupo-icon">📚</div>
+        <div>
+          <div class="grupo-name">${g.nombre}</div>
+          <div class="grupo-meta">Grupo ${g.id} · ${g.area} · Semestre ${g.semestre} · ${g.n} estudiantes</div>
+        </div>
+      </div>
+      <div style="font-size:0.77rem;color:var(--muted);margin-bottom:6px">Distribución de riesgo</div>
+      <div class="grupo-risk-bar">
+        <div class="grupo-risk-seg" style="width:${pAlto}%;background:var(--danger)"></div>
+        <div class="grupo-risk-seg" style="width:${pMedio}%;background:var(--warning)"></div>
+        <div class="grupo-risk-seg" style="width:${pBajo}%;background:var(--success)"></div>
+      </div>
+      <div class="grupo-stats">
+        <div class="grupo-stat"><span style="color:var(--danger);font-weight:700">${g.alto}</span> alto</div>
+        <div class="grupo-stat"><span style="color:var(--warning);font-weight:700">${g.medio}</span> medio</div>
+        <div class="grupo-stat"><span style="color:var(--success);font-weight:700">${g.bajo}</span> bajo</div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button class="btn-action" onclick="alert('Viendo detalle del grupo ${g.id}')">Ver detalle →</button>
+        <button class="btn-action" onclick="alert('Descargando reporte...')">⬇️ Reporte</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderEstudiantes(data) {
+  document.getElementById('estudiantesBody').innerHTML = (data || ESTUDIANTES).map(e => {
+    const rClass = `risk-${e.riesgo}`;
+    const dimDots = e.d.map((v, i) => {
+      const c = v >= 3.5 ? '#27ae60' : v >= 2.5 ? '#e67e22' : '#c0392b';
+      return `<div class="dim-dot" style="background:${c}" title="${DIM_NOMBRES[i]}: ${v}"></div>`;
+    }).join('');
+    const isHigh = e.riesgo === 'alto';
+    return `<tr class="${isHigh?'high-risk':''}">
+      <td style="font-weight:600">${e.nombre}</td>
+      <td style="color:var(--muted);font-size:0.78rem">${e.id}</td>
+      <td><span style="background:#eef2ff;color:#3b5ce6;padding:2px 8px;border-radius:6px;font-size:0.76rem;font-weight:600">${e.grupo}</span></td>
+      <td style="text-align:center">${e.sem}</td>
+      <td style="font-weight:700;color:${e.prom>=8?'var(--success)':e.prom>=7?'var(--warning)':'var(--danger)'}">${e.prom}</td>
+      ${e.d.map(v=>`<td style="font-weight:700;font-size:0.83rem;color:${v>=3.5?'var(--success)':v>=2.5?'var(--warning)':'var(--danger)'}">${v}</td>`).join('')}
+      <td><span class="risk-badge ${rClass}">${e.riesgo==='alto'?'●':'○'} ${e.riesgo}</span></td>
+      <td style="font-size:0.77rem;color:var(--muted)">${e.fecha}</td>
+      <td>
+        <div style="display:flex;gap:5px">
+          <button class="btn-action" onclick="verFicha('${e.id}')">Ficha</button>
+          <button class="btn-action" onclick="agregarNota('${e.nombre}')">Nota</button>
+          ${isHigh?`<button class="btn-action danger" onclick="alert('Derivando a orientación a ${e.nombre}...')">Derivar</button>`:''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAlertas() {
+  document.getElementById('alertasList').innerHTML = ALERTAS.map(a => {
+    const urgColor = a.urgencia === 'critica' ? 'var(--danger)' : '#d35400';
+    const bgColor  = a.urgencia === 'critica' ? '#fdecea' : '#fef9e7';
+    const border   = a.urgencia === 'critica' ? '#f5b7b1' : '#f9e79f';
+    return `<div style="background:${bgColor};border:1.5px solid ${border};border-radius:14px;padding:20px 22px">
+      <div style="display:flex;align-items:flex-start;gap:14px">
+        <div style="font-size:1.8rem">${a.icon}</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+            <span style="font-size:0.95rem;font-weight:700">${a.estudiante}</span>
+            <span style="background:${border};color:${urgColor};padding:2px 10px;border-radius:10px;font-size:0.74rem;font-weight:700;text-transform:uppercase">${a.urgencia}</span>
+            <span style="font-size:0.76rem;color:var(--muted);margin-left:auto">${a.fecha}</span>
+          </div>
+          <div style="font-size:0.88rem;font-weight:600;color:${urgColor};margin-bottom:4px">⚠️ ${a.tipo}</div>
+          <div style="font-size:0.83rem;color:var(--text);line-height:1.5;margin-bottom:12px">${a.desc}</div>
+          <div style="display:flex;gap:8px">
+            <button style="background:${urgColor};color:white;border:none;border-radius:8px;padding:7px 16px;font-size:0.8rem;font-weight:700;cursor:pointer" onclick="alert('Contactando a ${a.estudiante}...')">
+              📱 Contactar Ahora
+            </button>
+            <button class="btn-action" onclick="alert('Derivando a orientación...')">Derivar a CAPSI</button>
+            <button class="btn-action" onclick="agregarNota('${a.estudiante}')">Agregar Nota</button>
+            <button class="btn-action" onclick="this.closest('div[style]').style.opacity='0.4'">✓ Atendida</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderObservaciones() {
+  document.getElementById('obsList').innerHTML = OBSERVACIONES_DEMO.map(o =>
+    `<div class="obs-item">
+      <strong>${o.tipo} — ${o.est}</strong><br>
+      ${o.texto}
+      <div class="obs-meta">📅 ${o.fecha}</div>
+    </div>`
+  ).join('');
+}
+
+function renderCriticalDims() {
+  // Promedio de todas las dimensiones en todos los grupos
+  const avgs = DIM_NOMBRES.map((_, di) => {
+    const vals = GRUPOS.map(g => g.dims[di]);
+    return (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2);
+  });
+  document.getElementById('criticalDims').innerHTML = DIM_NOMBRES.map((n,i) => {
+    const v = parseFloat(avgs[i]);
+    const c = v >= 3.5 ? 'var(--success)' : v >= 2.5 ? 'var(--warning)' : 'var(--danger)';
+    const flag = v < 2.5 ? '⚠️ ' : v < 3.0 ? '🔶 ' : '✅ ';
+    return `<div style="text-align:center;padding:12px;background:#f8f9fa;border-radius:10px;border:1.5px solid ${v<2.5?'#f5b7b1':v<3.0?'#f9e79f':DIM_COLORS[i]+'33'}">
+      <div style="font-size:1.4rem;margin-bottom:4px">${['❤️','💡','🔥','💪','🤝','🏛️'][i]}</div>
+      <div style="font-size:1.4rem;font-weight:800;color:${c}">${v}</div>
+      <div style="font-size:0.72rem;color:var(--muted);line-height:1.3;margin-top:3px">${n.replace('D'+(i+1)+' ','')}</div>
+      <div style="font-size:0.7rem;margin-top:4px">${flag}${v<2.5?'Crítica':v<3.0?'Atención':'OK'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── FILTROS ──────────────────────────────────────────────
+function filterTable() {
+  const q     = document.getElementById('searchInput').value.toLowerCase();
+  const risk  = document.getElementById('filterRisk').value;
+  const grupo = document.getElementById('filterGrupo').value;
+  const filtered = ESTUDIANTES.filter(e =>
+    (!q     || e.nombre.toLowerCase().includes(q) || e.id.toLowerCase().includes(q)) &&
+    (!risk  || e.riesgo === risk) &&
+    (!grupo || e.grupo === grupo)
+  );
+  renderEstudiantes(filtered);
+}
+
+// ─── ACCIONES ─────────────────────────────────────────────
+function verFicha(id) {
+  const e = ESTUDIANTES.find(x => x.id === id);
+  if (!e) return;
+  alert(`📋 FICHA ATENEA AI — ${e.nombre}\n\nRiesgo: ${e.riesgo.toUpperCase()}\nPromedio: ${e.prom}\n\nDimensiones:\n${e.d.map((v,i)=>DIM_NOMBRES[i]+': '+v).join('\n')}\n\n→ En producción: abre la Ficha Atenea completa con SHAP waterfall`);
+}
+function agregarNota(nombre) {
+  document.getElementById('obsTexto').focus();
+  showTab('observaciones', document.querySelectorAll('.tab-btn')[4]);
+  document.getElementById('obsTexto').placeholder = 'Escribiendo nota para ' + nombre + '...';
+}
+function addObservacion() {
+  const texto = document.getElementById('obsTexto').value.trim();
+  if (!texto) { alert('Escribe la observación antes de guardar.'); return; }
+  OBSERVACIONES_DEMO.unshift({ est:'Estudiante seleccionado', tipo:'📝 Nueva', texto, fecha: new Date().toLocaleString('es-MX') });
+  renderObservaciones();
+  document.getElementById('obsTexto').value = '';
+}
+function exportReport() {
+  alert('📊 Exportando datos de tus estudiantes a CSV...\n(En producción: genera un CSV real con todas las métricas)');
+}
+
+// ─── CHARTS ───────────────────────────────────────────────
+function renderDashboardCharts() {
+  // Riesgo por grupo
+  const ctx1 = document.getElementById('riskByGroupChart')?.getContext('2d');
+  if (ctx1) new Chart(ctx1, {
+    type: 'bar',
+    data: {
+      labels: GRUPOS.map(g => g.id),
+      datasets: [
+        { label:'Alto',  data: GRUPOS.map(g=>g.alto),  backgroundColor:'#e74c3c', borderRadius:4 },
+        { label:'Medio', data: GRUPOS.map(g=>g.medio), backgroundColor:'#e67e22', borderRadius:4 },
+        { label:'Bajo',  data: GRUPOS.map(g=>g.bajo),  backgroundColor:'#27ae60', borderRadius:4 },
+      ]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}}},
+      scales:{ x:{stacked:true,grid:{display:false}}, y:{stacked:true,ticks:{font:{size:10}}} } }
+  });
+
+  // Evolución del riesgo (simulado semanas)
+  const ctx2 = document.getElementById('riskEvolutionChart')?.getContext('2d');
+  if (ctx2) new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: ['Sem 1','Sem 2','Sem 3','Sem 4','Sem 5','Sem 6','Sem 7','Sem 8'],
+      datasets: [
+        { label:'Riesgo alto',  data:[4,5,5,6,7,7,7,7], borderColor:'#e74c3c', backgroundColor:'#e74c3c22', tension:0.3, fill:true, borderWidth:2, pointRadius:4 },
+        { label:'Riesgo medio', data:[14,15,16,17,18,18,18,18], borderColor:'#e67e22', backgroundColor:'#e67e2222', tension:0.3, fill:true, borderWidth:2, pointRadius:4 },
+      ]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12}}},
+      scales:{ x:{grid:{display:false},ticks:{font:{size:10}}}, y:{ticks:{font:{size:10}}} } }
+  });
+}
+
+function renderReportesCharts() {
+  const avgDims = DIM_NOMBRES.map((_, di) => {
+    const vals = GRUPOS.map(g => g.dims[di]);
+    return parseFloat((vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2));
+  });
+
+  const ctx3 = document.getElementById('dimPromedioChart')?.getContext('2d');
+  if (ctx3) new Chart(ctx3, {
+    type: 'radar',
+    data: {
+      labels: DIM_NOMBRES.map(n => n.replace('D'+/\d+/.exec(n)[0]+' ','')),
+      datasets: [{ label:'Promedio mis grupos', data: avgDims,
+        backgroundColor:'rgba(230,126,34,0.15)', borderColor:'#e67e22', borderWidth:2, pointRadius:4 }]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      scales:{ r:{ min:1, max:5, ticks:{stepSize:1,font:{size:9},backdropColor:'transparent'}, grid:{color:'#e0e6ed'} } },
+      plugins:{legend:{display:false}} }
+  });
+
+  const ctx4 = document.getElementById('estilosGrupoChart')?.getContext('2d');
+  if (ctx4) new Chart(ctx4, {
+    type: 'doughnut',
+    data: {
+      labels:['Social','Reflexivo','Kinestésico','Lectoescritor','Auditivo','Visual'],
+      datasets:[{ data:[38,22,18,10,8,4], backgroundColor:['#9b59b6','#1abc9c','#e67e22','#3498db','#2ecc71','#e74c3c'], borderWidth:2 }]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'right', labels:{ font:{size:10}, boxWidth:14, padding:10 } } } }
+  });
+}
+
+// ─── TAB SWITCHING ─────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  setTimeout(() => {
+    if (id==='dashboard')     renderDashboardCharts();
+    if (id==='reportes')      renderReportesCharts();
+  }, 50);
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Nombre del usuario
+  try {
+    const u = JSON.parse(localStorage.getItem('atenea_user') || '{}');
+    if (u.nombre) document.getElementById('userName').textContent = u.nombre;
+  } catch(e) {}
+  renderGrupos();
+  renderEstudiantes();
+  renderAlertas();
+  renderObservaciones();
+  renderCriticalDims();
+  renderDashboardCharts();
+});
+</script>
+</body>
+</html>

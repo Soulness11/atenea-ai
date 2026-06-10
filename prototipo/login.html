@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Atenea AI — Acceso al Portal | UAQ</title>
+<style>
+  :root {
+    --primary: #1a3a5c; --accent: #2980b9; --teal: #16a085;
+    --success: #27ae60; --warning: #e67e22; --danger: #c0392b;
+    --bg: #f0f4f8; --card: #fff; --text: #2c3e50; --muted: #7f8c8d;
+    --border: #dce1e7; --shadow: 0 4px 24px rgba(0,0,0,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg);
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, #1a3a5c 0%, #2c6fad 60%, #16a085 100%);
+    padding: 16px 32px; display: flex; align-items: center; gap: 14px;
+  }
+  .logo { font-size: 28px; }
+  .brand h1 { font-size: 1.2rem; font-weight: 700; color: white; }
+  .brand p  { font-size: 0.78rem; color: rgba(255,255,255,0.75); }
+  .uaq-badge {
+    margin-left: auto; background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3); border-radius: 20px;
+    padding: 5px 14px; font-size: 0.76rem; color: white;
+  }
+
+  /* ── MAIN ── */
+  main {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 32px 16px;
+  }
+  .login-container { width: 100%; max-width: 480px; }
+
+  /* ── ROL SELECTOR ── */
+  .section-title {
+    text-align: center; margin-bottom: 22px;
+  }
+  .section-title h2 { font-size: 1.4rem; font-weight: 700; color: var(--primary); }
+  .section-title p  { font-size: 0.87rem; color: var(--muted); margin-top: 4px; }
+
+  .role-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 28px; }
+  .role-card {
+    border: 2px solid var(--border); border-radius: 14px; padding: 18px 12px;
+    text-align: center; cursor: pointer; transition: all 0.2s; background: white;
+  }
+  .role-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow); }
+  .role-card.selected { border-color: var(--accent); background: #eaf4fd; box-shadow: 0 0 0 3px rgba(41,128,185,0.15); }
+  .role-icon  { font-size: 2.2rem; margin-bottom: 8px; }
+  .role-name  { font-size: 0.88rem; font-weight: 700; color: var(--primary); margin-bottom: 3px; }
+  .role-desc  { font-size: 0.73rem; color: var(--muted); line-height: 1.4; }
+
+  /* ── FORM CARD ── */
+  .form-card {
+    background: white; border-radius: 18px; padding: 32px;
+    box-shadow: var(--shadow); border: 1px solid var(--border);
+  }
+
+  /* ── TABS ── */
+  .form-tabs { display: flex; gap: 4px; background: #f0f4f8; border-radius: 10px;
+    padding: 4px; margin-bottom: 24px; }
+  .form-tab {
+    flex: 1; padding: 9px; border-radius: 8px; border: none; background: none;
+    font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.2s;
+  }
+  .form-tab.active { background: white; color: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+  /* ── FIELDS ── */
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .field input, .field select {
+    width: 100%; padding: 10px 14px; border-radius: 10px; border: 1.5px solid var(--border);
+    font-size: 0.88rem; color: var(--text); background: white; transition: border 0.2s;
+    font-family: inherit;
+  }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--accent); }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* ── ROLE SPECIFIC FIELDS ── */
+  .role-fields { display: none; }
+  .role-fields.visible { display: block; }
+
+  /* ── SUBMIT BTN ── */
+  .btn-submit {
+    width: 100%; padding: 12px; background: linear-gradient(135deg, var(--accent), var(--teal));
+    color: white; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; margin-top: 4px;
+  }
+  .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(41,128,185,0.3); }
+
+  /* ── DIVIDER ── */
+  .divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
+  .divider::before, .divider::after { content:''; flex:1; border-top:1px solid var(--border); }
+  .divider span { font-size: 0.78rem; color: var(--muted); }
+
+  /* ── FORGOT ── */
+  .forgot { text-align: right; font-size: 0.8rem; }
+  .forgot a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .forgot a:hover { text-decoration: underline; }
+
+  /* ── ERROR / SUCCESS ── */
+  .alert {
+    padding: 10px 14px; border-radius: 10px; font-size: 0.83rem; margin-bottom: 14px;
+    display: none; align-items: center; gap: 8px;
+  }
+  .alert.show { display: flex; }
+  .alert-error   { background: #fdecea; border:1px solid #f5b7b1; color: var(--danger); }
+  .alert-success { background: #d4f4e2; border:1px solid #82e0aa; color: #1e8449; }
+
+  /* ── DEMO ACCOUNTS ── */
+  .demo-section { margin-top: 24px; }
+  .demo-title { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; text-align: center; }
+  .demo-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .demo-btn {
+    padding: 7px 14px; border-radius: 8px; border: 1.5px solid var(--border);
+    font-size: 0.78rem; font-weight: 600; cursor: pointer; background: white;
+    color: var(--text); transition: all 0.2s; display: flex; align-items: center; gap: 5px;
+  }
+  .demo-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  footer {
+    text-align: center; padding: 16px; font-size: 0.76rem; color: var(--muted);
+    border-top: 1px solid var(--border); background: white;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🦉</div>
+  <div class="brand">
+    <h1>Sistema Atenea AI</h1>
+    <p>Detección Temprana de Abandono Escolar · UAQ DTE 2026</p>
+  </div>
+  <div class="uaq-badge">Universidad Autónoma de Querétaro</div>
+</header>
+
+<main>
+  <div class="login-container">
+
+    <!-- Selector de Rol -->
+    <div class="section-title">
+      <h2>¿Cómo quieres acceder?</h2>
+      <p>Selecciona tu rol para ver la interfaz correcta</p>
+    </div>
+
+    <div class="role-grid">
+      <div class="role-card" id="role-estudiante" onclick="selectRole('estudiante')">
+        <div class="role-icon">🎓</div>
+        <div class="role-name">Estudiante</div>
+        <div class="role-desc">Mi seguimiento emocional y perfil de aprendizaje</div>
+      </div>
+      <div class="role-card" id="role-docente" onclick="selectRole('docente')">
+        <div class="role-icon">👨‍🏫</div>
+        <div class="role-name">Docente</div>
+        <div class="role-desc">Mis grupos, alertas y seguimiento de estudiantes</div>
+      </div>
+      <div class="role-card" id="role-admin" onclick="selectRole('admin')">
+        <div class="role-icon">🏛️</div>
+        <div class="role-name">Administrador</div>
+        <div class="role-desc">Visión institucional, reportes y gestión del sistema</div>
+      </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="form-card">
+      <!-- Tabs -->
+      <div class="form-tabs">
+        <button class="form-tab active" id="tab-login" onclick="showFormTab('login')">Iniciar Sesión</button>
+        <button class="form-tab" id="tab-register" onclick="showFormTab('register')">Registrarse</button>
+      </div>
+
+      <!-- Alert -->
+      <div class="alert alert-error" id="alertError">⚠️ <span id="alertErrorMsg">Error</span></div>
+      <div class="alert alert-success" id="alertSuccess">✅ <span id="alertSuccessMsg">Éxito</span></div>
+
+      <!-- ══ LOGIN FORM ══ -->
+      <div id="form-login">
+        <div class="field">
+          <label>Correo institucional</label>
+          <input type="email" id="loginEmail" placeholder="usuario@uaq.mx" />
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" />
+        </div>
+        <div class="forgot"><a href="#">¿Olvidaste tu contraseña?</a></div>
+        <button class="btn-submit" onclick="doLogin()">Ingresar al Sistema</button>
+
+        <div class="divider"><span>o accede con demo</span></div>
+        <div class="demo-section">
+          <div class="demo-title">Cuentas de demostración</div>
+          <div class="demo-btns">
+            <button class="demo-btn" onclick="loginDemo('estudiante')">🎓 Demo Estudiante</button>
+            <button class="demo-btn" onclick="loginDemo('docente')">👨‍🏫 Demo Docente</button>
+            <button class="demo-btn" onclick="loginDemo('admin')">🏛️ Demo Admin</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ REGISTER FORM ══ -->
+      <div id="form-register" style="display:none">
+        <div class="field-row">
+          <div class="field">
+            <label>Nombre(s)</label>
+            <input type="text" id="regNombre" placeholder="Luis Francisco" />
+          </div>
+          <div class="field">
+            <label>Apellidos</label>
+            <input type="text" id="regApellidos" placeholder="Pardo Perea" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Correo institucional</label>
+          <input type="email" id="regEmail" placeholder="usuario@uaq.mx" />
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Contraseña</label>
+            <input type="password" id="regPassword" placeholder="Mínimo 8 caracteres" />
+          </div>
+          <div class="field">
+            <label>Confirmar contraseña</label>
+            <input type="password" id="regPasswordConf" placeholder="Repite tu contraseña" />
+          </div>
+        </div>
+
+        <!-- Campos para ESTUDIANTE -->
+        <div class="role-fields" id="fields-estudiante">
+          <div class="field">
+            <label>Número de estudiante</label>
+            <input type="text" id="regMatricula" placeholder="2024XXXXX" />
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Programa / Carrera</label>
+              <select id="regPrograma">
+                <option value="">Selecciona...</option>
+                <option>Doctorado en Tecnología Educativa</option>
+                <option>Ingeniería en Computación</option>
+                <option>Administración de Empresas</option>
+                <option>Psicología</option>
+                <option>Medicina</option>
+                <option>Derecho</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Semestre actual</label>
+              <select id="regSemestre">
+                <option value="">Selecciona...</option>
+                <option>1</option><option>2</option><option>3</option><option>4</option>
+                <option>5</option><option>6</option><option>7</option><option>8</option>
+                <option>9</option><option>10</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Campos para DOCENTE -->
+        <div class="role-fields" id="fields-docente">
+          <div class="field">
+            <label>Número de empleado</label>
+            <input type="text" id="regNumEmpleado" placeholder="UAQ-XXXXX" />
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Facultad / Departamento</label>
+              <select id="regFacultad">
+                <option value="">Selecciona...</option>
+                <option>Dirección de Tecnología Educativa</option>
+                <option>Facultad de Ingeniería</option>
+                <option>Facultad de Ciencias Sociales</option>
+                <option>Facultad de Ciencias de la Salud</option>
+                <option>Facultad de Psicología</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Tipo de contratación</label>
+              <select id="regContratacion">
+                <option value="">Selecciona...</option>
+                <option>Tiempo completo</option>
+                <option>Medio tiempo</option>
+                <option>Por asignatura</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Campos para ADMIN -->
+        <div class="role-fields" id="fields-admin">
+          <div class="field">
+            <label>Número de empleado administrativo</label>
+            <input type="text" id="regNumAdmin" placeholder="UAQ-ADMIN-XXXXX" />
+          </div>
+          <div class="field">
+            <label>Área de adscripción</label>
+            <select id="regAreaAdmin">
+              <option value="">Selecciona...</option>
+              <option>Rectoría</option>
+              <option>Dirección Académica</option>
+              <option>Servicios Escolares</option>
+              <option>Tutorías y Orientación</option>
+              <option>Sistemas e Informática</option>
+            </select>
+          </div>
+          <div class="field" style="background:#fff8e1;border-radius:8px;padding:10px">
+            <label style="color:#856404">⚠️ Código de autorización</label>
+            <input type="text" id="regCodAdmin" placeholder="Solicitarlo a Sistemas e Informática" />
+          </div>
+        </div>
+
+        <div class="field" style="margin-top:4px">
+          <label style="display:flex;align-items:flex-start;gap:8px;font-weight:400;cursor:pointer">
+            <input type="checkbox" id="regTerminos" style="width:auto;margin-top:2px" />
+            <span style="font-size:0.8rem;color:var(--muted)">Acepto el tratamiento de mis datos conforme al <a href="#" style="color:var(--accent)">Aviso de Privacidad UAQ</a> y los <a href="#" style="color:var(--accent)">Términos de Uso</a> del Sistema Atenea AI</span>
+          </label>
+        </div>
+
+        <button class="btn-submit" onclick="doRegister()">Crear Mi Cuenta</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  Sistema Atenea AI v2.0 · UAQ Doctorado en Tecnología Educativa 2026 · Luis Francisco Pardo Perea
+  · <a href="portal_estudiante.html" style="color:var(--accent)">Ver demos</a>
+</footer>
+
+<script>
+let selectedRole = 'estudiante';
+
+// Selección de rol
+function selectRole(role) {
+  selectedRole = role;
+  document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('role-' + role).classList.add('selected');
+  // Mostrar campos específicos del rol en el registro
+  document.querySelectorAll('.role-fields').forEach(f => f.classList.remove('visible'));
+  const rf = document.getElementById('fields-' + role);
+  if (rf) rf.classList.add('visible');
+}
+
+// Tabs login / register
+function showFormTab(tab) {
+  document.getElementById('form-login').style.display    = tab === 'login'    ? 'block' : 'none';
+  document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
+  document.getElementById('tab-login').classList.toggle('active',    tab === 'login');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  hideAlerts();
+}
+
+function showError(msg) {
+  document.getElementById('alertErrorMsg').textContent = msg;
+  document.getElementById('alertError').classList.add('show');
+  document.getElementById('alertSuccess').classList.remove('show');
+}
+function showSuccess(msg) {
+  document.getElementById('alertSuccessMsg').textContent = msg;
+  document.getElementById('alertSuccess').classList.add('show');
+  document.getElementById('alertError').classList.remove('show');
+}
+function hideAlerts() {
+  document.getElementById('alertError').classList.remove('show');
+  document.getElementById('alertSuccess').classList.remove('show');
+}
+
+// Login con API
+async function doLogin() {
+  hideAlerts();
+  const email    = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!email || !password) { showError('Por favor completa todos los campos.'); return; }
+  try {
+    const res = await fetch('http://localhost:8000/auth/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email, password, role: selectedRole })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      localStorage.setItem('atenea_token', data.access_token);
+      localStorage.setItem('atenea_role',  data.role);
+      localStorage.setItem('atenea_user',  JSON.stringify(data.user));
+      redirectByRole(data.role);
+    } else {
+      const err = await res.json();
+      showError(err.detail || 'Credenciales incorrectas.');
+    }
+  } catch(e) {
+    // Si no hay backend, redirigir directamente (modo demo)
+    redirectByRole(selectedRole);
+  }
+}
+
+// Registro con API
+async function doRegister() {
+  hideAlerts();
+  const nombre   = document.getElementById('regNombre').value.trim();
+  const apellido = document.getElementById('regApellidos').value.trim();
+  const email    = document.getElementById('regEmail').value.trim();
+  const pass     = document.getElementById('regPassword').value;
+  const passConf = document.getElementById('regPasswordConf').value;
+  const terminos = document.getElementById('regTerminos').checked;
+
+  if (!nombre || !apellido || !email || !pass) { showError('Completa todos los campos obligatorios.'); return; }
+  if (pass !== passConf) { showError('Las contraseñas no coinciden.'); return; }
+  if (pass.length < 8)   { showError('La contraseña debe tener al menos 8 caracteres.'); return; }
+  if (!terminos)         { showError('Debes aceptar los términos de uso para continuar.'); return; }
+  if (selectedRole === 'admin') {
+    const codigo = document.getElementById('regCodAdmin').value.trim();
+    if (!codigo) { showError('El código de autorización es requerido para cuentas administradoras.'); return; }
+  }
+
+  const payload = {
+    nombre: nombre + ' ' + apellido,
+    email, password: pass,
+    role: selectedRole,
+    extra: {}
+  };
+  if (selectedRole === 'estudiante') {
+    payload.extra.matricula = document.getElementById('regMatricula').value;
+    payload.extra.programa  = document.getElementById('regPrograma').value;
+    payload.extra.semestre  = document.getElementById('regSemestre').value;
+  }
+  if (selectedRole === 'docente') {
+    payload.extra.num_empleado   = document.getElementById('regNumEmpleado').value;
+    payload.extra.facultad       = document.getElementById('regFacultad').value;
+    payload.extra.contratacion   = document.getElementById('regContratacion').value;
+  }
+  if (selectedRole === 'admin') {
+    payload.extra.num_empleado = document.getElementById('regNumAdmin').value;
+    payload.extra.area         = document.getElementById('regAreaAdmin').value;
+    payload.extra.codigo_auth  = document.getElementById('regCodAdmin').value;
+  }
+
+  try {
+    const res = await fetch('http://localhost:8000/auth/register', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      showSuccess('¡Cuenta creada! Ahora puedes iniciar sesión.');
+      setTimeout(() => showFormTab('login'), 1800);
+    } else {
+      const err = await res.json();
+      showError(err.detail || 'Error al crear la cuenta.');
+    }
+  } catch(e) {
+    showSuccess('¡Cuenta creada! (Modo demo — backend no disponible)');
+    setTimeout(() => redirectByRole(selectedRole), 1200);
+  }
+}
+
+// Demo rápido
+function loginDemo(role) {
+  selectRole(role);
+  localStorage.setItem('atenea_role', role);
+  localStorage.setItem('atenea_user', JSON.stringify({
+    nombre: role === 'estudiante' ? 'Luis Francisco Pardo' : role === 'docente' ? 'Dra. Ana García López' : 'Mtro. Roberto Silva',
+    email: role + '@uaq.mx', role
+  }));
+  setTimeout(() => redirectByRole(role), 300);
+}
+
+function redirectByRole(role) {
+  const map = {
+    'estudiante': 'portal_estudiante.html',
+    'docente':    'portal_docente.html',
+    'admin':      'portal_admin.html',
+  };
+  window.location.href = map[role] || 'portal_estudiante.html';
+}
+
+// Inicializar — seleccionar estudiante por default
+window.addEventListener('DOMContentLoaded', () => selectRole('estudiante'));
+</script>
+</body>
+</html>

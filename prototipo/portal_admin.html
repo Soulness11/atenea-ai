@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal Administrador — Sistema Atenea AI | UAQ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #1a3a5c; --accent: #2980b9; --teal: #16a085; --orange: #e67e22;
+    --success: #27ae60; --warning: #e67e22; --danger: #c0392b; --violet: #8e44ad;
+    --bg: #f0f4f8; --card: #fff; --text: #2c3e50; --muted: #7f8c8d;
+    --border: #dce1e7; --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+  header {
+    background: linear-gradient(135deg, #0d2137 0%, #1a3a5c 55%, #8e44ad 100%);
+    color: white;
+  }
+  .header-inner {
+    max-width: 1400px; margin: 0 auto; padding: 16px 28px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .logo { font-size: 26px; }
+  .header-title h1 { font-size: 1.2rem; font-weight: 700; }
+  .header-title p  { font-size: 0.78rem; opacity: 0.8; margin-top: 2px; }
+  .header-user { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .user-avatar { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+    border: 2px solid rgba(255,255,255,0.35); }
+  .logout-btn {
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+    color: white; border-radius: 8px; padding: 6px 14px; font-size: 0.8rem;
+    cursor: pointer; text-decoration: none; transition: background 0.2s;
+  }
+  .logout-btn:hover { background: rgba(255,255,255,0.25); }
+
+  nav { background: #0d2137; border-bottom: 3px solid #8e44ad; }
+  .nav-inner { max-width: 1400px; margin: 0 auto; padding: 0 28px; display: flex; gap: 2px; flex-wrap: wrap; }
+  .tab-btn {
+    background: none; border: none; color: rgba(255,255,255,0.6);
+    padding: 11px 16px; cursor: pointer; font-size: 0.85rem;
+    border-bottom: 3px solid transparent; margin-bottom: -3px;
+    transition: all 0.2s; display: flex; align-items: center; gap: 7px;
+  }
+  .tab-btn:hover { color: white; }
+  .tab-btn.active { color: white; border-bottom-color: #8e44ad; font-weight: 600; }
+
+  main { max-width: 1400px; margin: 0 auto; padding: 24px 28px 40px; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Cards */
+  .card { background: var(--card); border-radius: 14px; padding: 22px 24px;
+    box-shadow: var(--shadow); border: 1px solid var(--border); }
+  .card-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px; }
+
+  /* KPI Grid */
+  .kpi-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 14px; margin-bottom: 22px; }
+  .kpi-card { border-radius: 14px; padding: 16px 18px; border: 1px solid var(--border); background: white; box-shadow: var(--shadow); }
+  .kpi-val  { font-size: 2.1rem; font-weight: 800; line-height: 1; margin-bottom: 3px; }
+  .kpi-lbl  { font-size: 0.78rem; color: var(--muted); }
+  .kpi-sub  { font-size: 0.74rem; margin-top: 8px; }
+  .kpi-sub.up   { color: var(--success); }
+  .kpi-sub.down { color: var(--danger); }
+
+  /* Grid layouts */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 22px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 22px; }
+
+  /* Tabla */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th { padding: 10px 14px; text-align: left; background: #f8f9fa; color: var(--muted);
+    font-weight: 600; border-bottom: 2px solid var(--border); font-size: 0.77rem;
+    text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:hover td { background: #f8f9fb; }
+
+  /* Badges */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px;
+    border-radius: 10px; font-size: 0.72rem; font-weight: 700; white-space: nowrap;
+  }
+  .badge-red    { background: #fdecea; color: var(--danger); }
+  .badge-yellow { background: #fef9e7; color: #d68910; }
+  .badge-green  { background: #d4f4e2; color: #1e8449; }
+  .badge-blue   { background: #eaf3fb; color: var(--accent); }
+  .badge-violet { background: #f5eef8; color: var(--violet); }
+
+  /* Chart wrap */
+  .chart-wrap { height: 230px; position: relative; }
+  .chart-wrap-tall { height: 300px; position: relative; }
+
+  /* Model metric cards */
+  .metric-card {
+    border-radius: 12px; padding: 16px; border: 1.5px solid var(--border); background: white; text-align: center;
+  }
+  .metric-val  { font-size: 2rem; font-weight: 800; margin-bottom: 3px; }
+  .metric-lbl  { font-size: 0.78rem; color: var(--muted); margin-bottom: 6px; }
+  .metric-bar  { height: 6px; border-radius: 3px; background: #eee; overflow: hidden; }
+  .metric-fill { height: 100%; border-radius: 3px; }
+
+  /* Filter bar */
+  .filter-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-bar input, .filter-bar select {
+    padding: 8px 12px; border-radius: 9px; border: 1.5px solid var(--border);
+    font-size: 0.82rem; background: white; color: var(--text); font-family: inherit;
+  }
+  .filter-bar input { flex: 1; min-width: 200px; }
+
+  /* Toggle switch */
+  .toggle-row { display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .toggle-row:last-child { border-bottom: none; }
+  .toggle-label { font-size: 0.85rem; font-weight: 600; }
+  .toggle-desc  { font-size: 0.76rem; color: var(--muted); margin-top: 2px; }
+  .toggle {
+    position: relative; width: 42px; height: 22px;
+    background: #ddd; border-radius: 11px; cursor: pointer; transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--teal); }
+  .toggle::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 16px; height: 16px; border-radius: 50%; background: white;
+    transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle.on::after { transform: translateX(20px); }
+
+  /* Section divider */
+  .section-title { font-size: 1.05rem; font-weight: 700; color: var(--primary);
+    margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--border);
+    display: flex; align-items: center; gap: 9px; }
+
+  /* User role tabs */
+  .role-filter { display: flex; gap: 6px; margin-bottom: 16px; }
+  .role-btn {
+    padding: 6px 16px; border-radius: 20px; border: 1.5px solid var(--border);
+    font-size: 0.8rem; font-weight: 600; cursor: pointer; background: white; color: var(--muted);
+    transition: all 0.15s;
+  }
+  .role-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+  @media(max-width:1100px) {
+    .kpi-grid { grid-template-columns: repeat(3,1fr); }
+    .grid-4   { grid-template-columns: 1fr 1fr; }
+  }
+  @media(max-width:800px) {
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">🛡️</div>
+    <div class="header-title">
+      <h1>Sistema Atenea AI — Panel Administrativo</h1>
+      <p>Supervisión institucional · Rendimiento del modelo · Gestión de usuarios</p>
+    </div>
+    <div class="header-user">
+      <div>
+        <div style="font-size:0.88rem;font-weight:600" id="userName">Dr. Francisco Pardo</div>
+        <div style="font-size:0.75rem;opacity:0.75">Administrador del Sistema</div>
+      </div>
+      <div class="user-avatar">👨‍💻</div>
+      <a class="logout-btn" href="login.html">← Salir</a>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <div class="nav-inner">
+    <button class="tab-btn active" onclick="showTab('overview',this)">🏛️ Vista General</button>
+    <button class="tab-btn" onclick="showTab('facultades',this)">🎓 Por Facultad</button>
+    <button class="tab-btn" onclick="showTab('modelo',this)">🤖 Modelo ML</button>
+    <button class="tab-btn" onclick="showTab('usuarios',this)">👥 Gestión Usuarios</button>
+    <button class="tab-btn" onclick="showTab('reportes',this)">📊 Reportes</button>
+    <button class="tab-btn" onclick="showTab('configuracion',this)">⚙️ Configuración</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ═══ TAB 1 — VISTA GENERAL ═══ -->
+<div id="tab-overview" class="tab-panel active">
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-val" style="color:var(--accent)">4,332</div>
+      <div class="kpi-lbl">Estudiantes registrados</div>
+      <div class="kpi-sub up">▲ +143 este semestre</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" style="color:var(--danger)">521</div>
+      <div class="kpi-lbl">En riesgo alto</div>
+      <div class="kpi-sub down">▲ +38 vs semestre anterior</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" style="color:var(--warning)">1,147</div>
+      <div class="kpi-lbl">En riesgo medio</div>
+      <div class="kpi-sub">26.5% del total</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" style="color:var(--success)">2,664</div>
+      <div class="kpi-lbl">Riesgo bajo</div>
+      <div class="kpi-sub up">61.5% del total</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" style="color:var(--violet)">96.4%</div>
+      <div class="kpi-lbl">AUC-ROC modelo</div>
+      <div class="kpi-sub up">Stacking Ensemble v2.0</div>
+    </div>
+  </div>
+
+  <!-- Gráficas globales -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">📊 Distribución de riesgo institucional</div>
+      <div class="chart-wrap"><canvas id="riskDistChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📈 Tendencia de deserción — Últimos 6 semestres</div>
+      <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Top dimensiones críticas -->
+  <div class="card" style="margin-bottom:22px">
+    <div class="card-title">🔭 Dimensiones SIP — Promedio institucional</div>
+    <div id="institutionalDims" style="display:grid;grid-template-columns:repeat(6,1fr);gap:14px"></div>
+  </div>
+
+  <!-- Actividad reciente -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🔔 Actividad Reciente del Sistema</div>
+      <div id="activityFeed" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Estado del sistema Atenea AI</div>
+      <div id="systemStatus" style="display:flex;flex-direction:column;gap:0"></div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ═══ TAB 2 — POR FACULTAD ═══ -->
+<div id="tab-facultades" class="tab-panel">
+  <div class="section-title">🎓 Comparativa por Facultad — Semestre 2026-A</div>
+  <div class="card" style="margin-bottom:22px">
+    <div class="table-wrap">
+      <table id="facultadesTable">
+        <thead>
+          <tr>
+            <th>Facultad / División</th>
+            <th>Estudiantes</th>
+            <th>Riesgo Alto</th>
+            <th>Riesgo Medio</th>
+            <th>Riesgo Bajo</th>
+            <th>% Deserción Est.</th>
+            <th>D1 Bienestar</th>
+            <th>D3 Motivación</th>
+            <th>D6 Afiliación</th>
+            <th>Docentes activos</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="facultadesBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">📊 Riesgo alto por facultad</div>
+      <div class="chart-wrap-tall"><canvas id="facultadRiskChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🕸️ Dimensiones SIP por facultad (top 3)</div>
+      <div class="chart-wrap-tall"><canvas id="facultadDimChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ TAB 3 — MODELO ML ═══ -->
+<div id="tab-modelo" class="tab-panel">
+  <div class="section-title">🤖 Rendimiento del Modelo Predictivo</div>
+
+  <div class="grid-4" style="margin-bottom:22px">
+    <div class="metric-card">
+      <div class="metric-val" style="color:var(--violet)">0.9639</div>
+      <div class="metric-lbl">AUC-ROC</div>
+      <div class="metric-bar"><div class="metric-fill" style="width:96.4%;background:var(--violet)"></div></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" style="color:var(--success)">0.9035</div>
+      <div class="metric-lbl">F1-Score</div>
+      <div class="metric-bar"><div class="metric-fill" style="width:90.4%;background:var(--success)"></div></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" style="color:var(--accent)">0.8917</div>
+      <div class="metric-lbl">Recall (Sensibilidad)</div>
+      <div class="metric-bar"><div class="metric-fill" style="width:89.2%;background:var(--accent)"></div></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val" style="color:var(--teal)">0.9153</div>
+      <div class="metric-lbl">Precisión</div>
+      <div class="metric-bar"><div class="metric-fill" style="width:91.5%;background:var(--teal)"></div></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">📊 Comparativa de modelos base vs stacking</div>
+      <div class="chart-wrap"><canvas id="modelCompareChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔍 Importancia de variables (SHAP global)</div>
+      <div class="chart-wrap"><canvas id="shapChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 Registro de versiones del modelo</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Versión</th><th>Fecha</th><th>Dataset</th><th>N</th><th>AUC-ROC</th><th>F1</th><th>Cambios</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>v2.0 — Stacking</strong></td><td>Mar 2026</td>
+            <td>UCI Dropout + Kaggle Depression + UAQ Sintético</td><td>4,332</td>
+            <td style="font-weight:700;color:var(--success)">0.9639</td>
+            <td style="font-weight:700;color:var(--success)">0.9035</td>
+            <td>Stacking RF+XGB+GB→FNN; 6 dimensiones SIP</td>
+            <td><span class="badge badge-green">✓ Activo</span></td>
+          </tr>
+          <tr>
+            <td>v1.5 — RF+XGB</td><td>Ene 2026</td><td>UAQ Sintético</td><td>1,200</td>
+            <td>0.9102</td><td>0.8744</td>
+            <td>Ensemble simple sin meta-learner</td>
+            <td><span class="badge badge-yellow">Archivado</span></td>
+          </tr>
+          <tr>
+            <td>v1.0 — Random Forest</td><td>Nov 2025</td><td>UAQ Sintético</td><td>800</td>
+            <td>0.8821</td><td>0.8312</td>
+            <td>Modelo base inicial, 3 variables</td>
+            <td><span class="badge badge-yellow">Archivado</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ TAB 4 — USUARIOS ═══ -->
+<div id="tab-usuarios" class="tab-panel">
+  <div class="filter-bar">
+    <input type="text" id="userSearch" placeholder="🔍 Buscar usuario..." oninput="filterUsers()">
+    <select id="userRoleFilter" onchange="filterUsers()">
+      <option value="">Todos los roles</option>
+      <option value="estudiante">Estudiante</option>
+      <option value="docente">Docente</option>
+      <option value="admin">Administrador</option>
+    </select>
+    <select id="userStatusFilter" onchange="filterUsers()">
+      <option value="">Todos los estados</option>
+      <option value="activo">Activo</option>
+      <option value="inactivo">Inactivo</option>
+    </select>
+    <button style="padding:8px 16px;background:var(--teal);color:white;border:none;border-radius:9px;font-size:0.82rem;font-weight:600;cursor:pointer" onclick="openAddUser()">
+      ➕ Nuevo Usuario
+    </button>
+    <button style="padding:8px 16px;background:var(--accent);color:white;border:none;border-radius:9px;font-size:0.82rem;font-weight:600;cursor:pointer" onclick="alert('Exportando CSV...')">
+      ⬇️ Exportar
+    </button>
+  </div>
+
+  <div class="role-filter">
+    <button class="role-btn active" onclick="filterByRole('', this)">🌐 Todos</button>
+    <button class="role-btn" onclick="filterByRole('estudiante', this)">🎓 Estudiantes</button>
+    <button class="role-btn" onclick="filterByRole('docente', this)">👩‍🏫 Docentes</button>
+    <button class="role-btn" onclick="filterByRole('admin', this)">🛡️ Administradores</button>
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th><th>Email</th><th>Rol</th><th>Facultad/Área</th>
+            <th>Registro</th><th>Último acceso</th><th>Estado</th><th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="usersBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal agregar usuario -->
+  <div id="addUserModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:none;align-items:center;justify-content:center">
+    <div style="background:white;border-radius:16px;padding:28px;width:460px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+      <h3 style="margin-bottom:18px;font-size:1.05rem">➕ Nuevo Usuario</h3>
+      <div style="display:grid;gap:12px">
+        <input placeholder="Nombre completo" style="padding:9px 12px;border-radius:9px;border:1.5px solid var(--border);font-family:inherit;font-size:0.85rem">
+        <input placeholder="Correo electrónico" type="email" style="padding:9px 12px;border-radius:9px;border:1.5px solid var(--border);font-family:inherit;font-size:0.85rem">
+        <select style="padding:9px 12px;border-radius:9px;border:1.5px solid var(--border);font-family:inherit;font-size:0.85rem">
+          <option>Rol: Estudiante</option>
+          <option>Rol: Docente</option>
+          <option>Rol: Administrador</option>
+        </select>
+        <input placeholder="Contraseña temporal" type="password" style="padding:9px 12px;border-radius:9px;border:1.5px solid var(--border);font-family:inherit;font-size:0.85rem">
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button onclick="document.getElementById('addUserModal').style.display='none'" style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:9px;background:white;font-family:inherit;cursor:pointer;font-size:0.85rem">Cancelar</button>
+        <button onclick="alert('Usuario creado (demo)');document.getElementById('addUserModal').style.display='none'" style="flex:1;padding:10px;background:var(--teal);color:white;border:none;border-radius:9px;font-weight:700;cursor:pointer;font-size:0.85rem">Crear Usuario</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ TAB 5 — REPORTES ═══ -->
+<div id="tab-reportes" class="tab-panel">
+  <div class="section-title">📊 Centro de Reportes</div>
+  <div class="grid-3">
+    <div class="card" style="cursor:pointer" onclick="alert('Generando reporte ejecutivo PDF...')">
+      <div style="font-size:2.5rem;margin-bottom:12px">📄</div>
+      <div style="font-weight:700;margin-bottom:6px">Reporte Ejecutivo Institucional</div>
+      <div style="font-size:0.8rem;color:var(--muted);line-height:1.5">Resumen ejecutivo con KPIs de riesgo, tendencias y recomendaciones de intervención. PDF con branding UAQ.</div>
+      <div style="margin-top:14px"><span class="badge badge-blue">PDF · A4</span> <span class="badge badge-green">Listo en 30s</span></div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="alert('Descargando CSV completo...')">
+      <div style="font-size:2.5rem;margin-bottom:12px">📋</div>
+      <div style="font-weight:700;margin-bottom:6px">Dataset Completo</div>
+      <div style="font-size:0.8rem;color:var(--muted);line-height:1.5">Exporta todos los registros de estudiantes con dimensiones SIP, predicción de riesgo y estilo de aprendizaje.</div>
+      <div style="margin-top:14px"><span class="badge badge-blue">CSV</span> <span class="badge badge-green">4,332 filas</span></div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="alert('Generando reporte por facultad...')">
+      <div style="font-size:2.5rem;margin-bottom:12px">🎓</div>
+      <div style="font-weight:700;margin-bottom:6px">Reporte por Facultad</div>
+      <div style="font-size:0.8rem;color:var(--muted);line-height:1.5">Comparativa entre facultades: distribución de riesgo, dimensiones SIP promedio y tasa estimada de abandono.</div>
+      <div style="margin-top:14px"><span class="badge badge-blue">PDF + XLS</span></div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="alert('Generando reporte del modelo...')">
+      <div style="font-size:2.5rem;margin-bottom:12px">🤖</div>
+      <div style="font-weight:700;margin-bottom:6px">Validación del Modelo ML</div>
+      <div style="font-size:0.8rem;color:var(--muted);line-height:1.5">Métricas completas (AUC-ROC, F1, matriz de confusión), SHAP global y comparativa entre versiones.</div>
+      <div style="margin-top:14px"><span class="badge badge-violet">Técnico · PDF</span></div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="alert('Generando reporte de intervenciones...')">
+      <div style="font-size:2.5rem;margin-bottom:12px">🤝</div>
+      <div style="font-weight:700;margin-bottom:6px">Registro de Intervenciones</div>
+      <div style="font-size:0.8rem;color:var(--muted);line-height:1.5">Historial de derivaciones a CAPSI, notas de docentes y seguimiento de alertas atendidas.</div>
+      <div style="margin-top:14px"><span class="badge badge-blue">PDF</span></div>
+    </div>
+    <div class="card" style="cursor:pointer" onclick="alert('Generando reporte de estilos...')">
+      <div style="font-size:2.5rem;margin-bottom:12px">🎯</div>
+      <div style="font-weight:700;margin-bottom:6px">Perfiles de Aprendizaje</div>
+      <div style="font-size:0.8rem;color:var(--muted);line-height:1.5">Distribución de estilos VARK institucional, correlación con riesgo e indicadores de neurodivergencia.</div>
+      <div style="margin-top:14px"><span class="badge badge-blue">PDF + CSV</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📅 Programar Reporte Automático</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end">
+      <div>
+        <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:6px">Tipo de reporte</label>
+        <select style="width:100%;padding:8px 12px;border-radius:9px;border:1.5px solid var(--border);font-family:inherit;font-size:0.83rem">
+          <option>Ejecutivo Institucional</option>
+          <option>Dataset Completo</option>
+          <option>Por Facultad</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:6px">Frecuencia</label>
+        <select style="width:100%;padding:8px 12px;border-radius:9px;border:1.5px solid var(--border);font-family:inherit;font-size:0.83rem">
+          <option>Semanal (cada lunes)</option>
+          <option>Mensual</option>
+          <option>Por semestre</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:6px">Enviar a</label>
+        <input type="email" placeholder="rector@uaq.mx" style="width:100%;padding:8px 12px;border-radius:9px;border:1.5px solid var(--border);font-family:inherit;font-size:0.83rem">
+      </div>
+      <button style="padding:10px 20px;background:var(--violet);color:white;border:none;border-radius:9px;font-weight:700;font-size:0.85rem;cursor:pointer" onclick="alert('Reporte programado (demo)')">
+        Programar →
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══ TAB 6 — CONFIGURACIÓN ═══ -->
+<div id="tab-configuracion" class="tab-panel">
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🎚️ Umbrales del Modelo</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:6px">
+            Umbral riesgo alto <span style="color:var(--danger)">● ≥ <span id="threshHigh">70</span>%</span>
+          </label>
+          <input type="range" min="50" max="90" value="70" oninput="document.getElementById('threshHigh').textContent=this.value" style="width:100%">
+        </div>
+        <div>
+          <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:6px">
+            Umbral riesgo medio <span style="color:var(--warning)">● ≥ <span id="threshMed">40</span>%</span>
+          </label>
+          <input type="range" min="20" max="70" value="40" oninput="document.getElementById('threshMed').textContent=this.value" style="width:100%">
+        </div>
+        <div>
+          <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:6px">
+            Ventana de evaluación: <span id="evalWindow">30</span> días
+          </label>
+          <input type="range" min="7" max="90" value="30" oninput="document.getElementById('evalWindow').textContent=this.value" style="width:100%">
+        </div>
+        <button style="background:var(--primary);color:white;border:none;border-radius:9px;padding:10px 20px;font-weight:700;cursor:pointer;font-size:0.85rem" onclick="alert('Umbrales guardados')">
+          💾 Guardar Umbrales
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔔 Notificaciones y Alertas</div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Alertas automáticas a docentes</div><div class="toggle-desc">Envía alerta cuando un estudiante pasa a riesgo alto</div></div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Notificación semanal al admin</div><div class="toggle-desc">Resumen del estado institucional cada lunes</div></div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Derivación automática a CAPSI</div><div class="toggle-desc">Si D1 Bienestar cae <2 por 2+ semanas consecutivas</div></div>
+        <div class="toggle" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Portal visible para estudiantes</div><div class="toggle-desc">Permite que los estudiantes accedan a su portal</div></div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">📊 Reentrenamiento del modelo</div>
+      <div style="font-size:0.84rem;color:var(--muted);margin-bottom:16px;line-height:1.6">
+        El modelo se reentrenó por última vez el <strong>15 Mar 2026</strong> con
+        <strong>4,332 registros</strong>. El siguiente reentrenamiento automático está programado para
+        el inicio del semestre 2026-B.
+      </div>
+      <div style="display:flex;gap:10px">
+        <button style="flex:1;background:var(--violet);color:white;border:none;border-radius:9px;padding:10px;font-weight:700;cursor:pointer;font-size:0.84rem" onclick="alert('Iniciando reentrenamiento... (ejecutar 05_stacking_ensemble.py)')">
+          🔄 Reentrenar Ahora
+        </button>
+        <button style="flex:1;background:white;border:1.5px solid var(--border);border-radius:9px;padding:10px;font-weight:600;cursor:pointer;font-size:0.84rem" onclick="alert('Descargando logs...')">
+          📥 Ver Logs
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔐 Seguridad</div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Autenticación JWT activa</div><div class="toggle-desc">Tokens con expiración de 24 horas</div></div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Logs de acceso</div><div class="toggle-desc">Registrar cada inicio de sesión con IP y timestamp</div></div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Modo mantenimiento</div><div class="toggle-desc">Bloquear todos los portales durante actualizaciones</div></div>
+        <div class="toggle" onclick="this.classList.toggle('on')"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ─── DATA ──────────────────────────────────────────────────
+const DIM_NAMES = ['D1 Bienestar','D2 Autopercepción','D3 Motivación','D4 Resiliencia','D5 Relaciones','D6 Afiliación'];
+
+const FACULTADES = [
+  { nombre:'DTE',        n:412,  alto:62, medio:98, bajo:252, deser:19.2, dims:[3.2,3.3,3.0,2.9,3.6,2.8], docentes:28 },
+  { nombre:'Ingeniería', n:1204, alto:189,medio:312,bajo:703, deser:19.6, dims:[3.5,3.7,3.8,3.4,3.3,3.1], docentes:87 },
+  { nombre:'Psicología', n:521,  alto:48, medio:118,bajo:355, deser:11.7, dims:[4.1,4.0,4.2,3.9,4.3,3.8], docentes:41 },
+  { nombre:'Medicina',   n:634,  alto:94, medio:189,bajo:351, deser:19.2, dims:[3.0,3.2,2.9,2.8,3.4,2.7], docentes:52 },
+  { nombre:'Derecho',    n:487,  alto:71, medio:142,bajo:274, deser:17.9, dims:[3.3,3.4,3.5,3.1,3.7,3.0], docentes:38 },
+  { nombre:'Química',    n:398,  alto:57, medio:148,bajo:193, deser:22.1, dims:[2.8,2.9,2.7,2.6,3.1,2.5], docentes:31 },
+  { nombre:'Contaduría', n:676,  alto:0,  medio:140,bajo:536, deser:  0, dims:[3.7,3.8,3.9,3.5,3.8,3.4], docentes:49 },
+];
+
+const USERS_DEMO = [
+  { nombre:'Carlos Mendoza Torres', email:'c.mendoza@uaq.edu.mx', rol:'estudiante', area:'DTE', reg:'12 Ago 2025', acceso:'Hoy', status:'activo' },
+  { nombre:'María Sánchez Guerrero',email:'m.sanchez@uaq.edu.mx', rol:'estudiante', area:'ING', reg:'12 Ago 2025', acceso:'Ayer', status:'activo' },
+  { nombre:'Dra. Ana García López', email:'a.garcia@uaq.edu.mx',  rol:'docente',    area:'DTE', reg:'01 Ene 2025', acceso:'Hoy', status:'activo' },
+  { nombre:'Dr. Javier Ortiz Ramos',email:'j.ortiz@uaq.edu.mx',   rol:'docente',    area:'ING', reg:'01 Ene 2025', acceso:'Hace 3d', status:'activo' },
+  { nombre:'Dr. Francisco Pardo',   email:'f.pardo@uaq.edu.mx',   rol:'admin',      area:'TI',  reg:'01 Sep 2024', acceso:'Hoy', status:'activo' },
+  { nombre:'Lic. Rosa Méndez',      email:'r.mendez@uaq.edu.mx',  rol:'estudiante', area:'PSI', reg:'14 Ago 2025', acceso:'Inactivo', status:'inactivo' },
+];
+
+const ACTIVITY = [
+  { icon:'🔴', msg:'UAQ0092 — Diana López pasó a riesgo <strong>alto</strong>', time:'Hace 2h' },
+  { icon:'✅', msg:'Intervención de orientación completada para UAQ0023', time:'Hace 5h' },
+  { icon:'🔄', msg:'Modelo reentrenado exitosamente — AUC: 0.9639', time:'Hace 1d' },
+  { icon:'👤', msg:'Nuevo docente registrado: Dr. Javier Ortiz (ING)', time:'Hace 2d' },
+  { icon:'📊', msg:'Reporte ejecutivo generado y enviado a rectoría', time:'Hace 3d' },
+  { icon:'⚠️', msg:'UAQ0041 — 3 semanas consecutivas con D1 < 2.5', time:'Hace 4d' },
+];
+
+const SYSTEM_STATUS = [
+  { name:'API Backend (FastAPI)',    ok: true,  val: '120ms avg' },
+  { name:'Base de datos SQLite',     ok: true,  val: '4,332 registros' },
+  { name:'Modelo ML (Stacking)',     ok: true,  val: 'v2.0 · Mar 2026' },
+  { name:'Portal Estudiante',        ok: true,  val: 'Online' },
+  { name:'Portal Docente',           ok: true,  val: 'Online' },
+  { name:'Módulo SHAP/XAI',          ok: true,  val: 'shap 0.44.1' },
+];
+
+// ─── RENDERS ──────────────────────────────────────────────
+function renderInstitutionalDims() {
+  const avgs = DIM_NAMES.map((_, di) => {
+    const vals = FACULTADES.map(f => f.dims[di]);
+    return parseFloat((vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2));
+  });
+  document.getElementById('institutionalDims').innerHTML = DIM_NAMES.map((n,i) => {
+    const v = parseFloat(avgs[i]);
+    const c = v >= 3.5 ? 'var(--success)' : v >= 2.5 ? 'var(--warning)' : 'var(--danger)';
+    return `<div style="text-align:center;padding:12px;background:#f8f9fa;border-radius:10px;">
+      <div style="font-size:1.4rem;margin-bottom:4px">${['❤️','💡','🔥','💪','🤝','🏛️'][i]}</div>
+      <div style="font-size:1.5rem;font-weight:800;color:${c}">${v}</div>
+      <div style="font-size:0.7rem;color:var(--muted);line-height:1.3;margin-top:3px">${n.replace('D'+(i+1)+' ','')}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderActivity() {
+  document.getElementById('activityFeed').innerHTML = ACTIVITY.map(a =>
+    `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:1.1rem">${a.icon}</span>
+      <div style="flex:1">
+        <div style="font-size:0.82rem;line-height:1.5">${a.msg}</div>
+        <div style="font-size:0.73rem;color:var(--muted)">${a.time}</div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+function renderSystemStatus() {
+  document.getElementById('systemStatus').innerHTML = SYSTEM_STATUS.map(s =>
+    `<div class="toggle-row">
+      <div><div class="toggle-label">${s.name}</div><div class="toggle-desc">${s.val}</div></div>
+      <span class="badge ${s.ok?'badge-green':'badge-red'}">${s.ok?'✓ OK':'✗ Error'}</span>
+    </div>`
+  ).join('');
+}
+
+function renderFacultades() {
+  document.getElementById('facultadesBody').innerHTML = FACULTADES.map(f => {
+    const total = f.alto + f.medio + f.bajo;
+    const pAlto = (f.alto/total*100).toFixed(1);
+    return `<tr>
+      <td><strong>${f.nombre}</strong></td>
+      <td>${f.n.toLocaleString()}</td>
+      <td><span class="badge badge-red">● ${f.alto} (${pAlto}%)</span></td>
+      <td>${f.medio}</td>
+      <td>${f.bajo}</td>
+      <td style="font-weight:700;color:${f.deser>20?'var(--danger)':f.deser>15?'var(--warning)':'var(--success)'}">${f.deser}%</td>
+      <td style="color:${f.dims[0]<3?'var(--danger)':'var(--success)';font-weight:600">${f.dims[0]}</td>
+      <td style="color:${f.dims[2]<3?'var(--danger)':'var(--success)';font-weight:600">${f.dims[2]}</td>
+      <td style="color:${f.dims[5]<3?'var(--danger)':'var(--success)';font-weight:600">${f.dims[5]}</td>
+      <td>${f.docentes}</td>
+      <td>
+        <button class="btn-action" onclick="alert('Detalle de ${f.nombre}')">Ver →</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderUsers(data) {
+  const roleIcon = { estudiante:'🎓', docente:'👩‍🏫', admin:'🛡️' };
+  const roleBadge = { estudiante:'badge-blue', docente:'badge-green', admin:'badge-violet' };
+  document.getElementById('usersBody').innerHTML = (data||USERS_DEMO).map(u =>
+    `<tr>
+      <td><strong>${u.nombre}</strong></td>
+      <td style="font-size:0.78rem;color:var(--muted)">${u.email}</td>
+      <td><span class="badge ${roleBadge[u.rol]}">${roleIcon[u.rol]} ${u.rol}</span></td>
+      <td>${u.area}</td>
+      <td style="font-size:0.77rem;color:var(--muted)">${u.reg}</td>
+      <td style="font-size:0.77rem">${u.acceso}</td>
+      <td><span class="badge ${u.status==='activo'?'badge-green':'badge-yellow'}">${u.status}</span></td>
+      <td>
+        <div style="display:flex;gap:5px">
+          <button class="btn-action" onclick="alert('Editando a ${u.nombre}')">Editar</button>
+          <button class="btn-action" onclick="alert('${u.status==='activo'?'Desactivando':'Activando'} a ${u.nombre}...')">${u.status==='activo'?'Desactivar':'Activar'}</button>
+        </div>
+      </td>
+    </tr>`
+  ).join('');
+}
+
+// ─── FILTROS ──────────────────────────────────────────────
+let _currentRoleFilter = '';
+function filterByRole(role, btn) {
+  _currentRoleFilter = role;
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterUsers();
+}
+function filterUsers() {
+  const q      = (document.getElementById('userSearch')?.value||'').toLowerCase();
+  const role   = (document.getElementById('userRoleFilter')?.value||'') || _currentRoleFilter;
+  const status = document.getElementById('userStatusFilter')?.value||'';
+  const filtered = USERS_DEMO.filter(u =>
+    (!q      || u.nombre.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) &&
+    (!role   || u.rol === role) &&
+    (!status || u.status === status)
+  );
+  renderUsers(filtered);
+}
+function openAddUser() {
+  document.getElementById('addUserModal').style.display = 'flex';
+}
+
+// ─── CHARTS ───────────────────────────────────────────────
+function renderOverviewCharts() {
+  const ctx1 = document.getElementById('riskDistChart')?.getContext('2d');
+  if (ctx1) new Chart(ctx1, {
+    type: 'doughnut',
+    data: {
+      labels: ['Riesgo Alto (12%)', 'Riesgo Medio (26.5%)', 'Riesgo Bajo (61.5%)'],
+      datasets: [{ data:[521, 1147, 2664],
+        backgroundColor:['#e74c3c','#e67e22','#27ae60'], borderWidth:3, borderColor:'#fff' }]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ font:{size:10}, boxWidth:14, padding:10 } } } }
+  });
+
+  const ctx2 = document.getElementById('trendChart')?.getContext('2d');
+  if (ctx2) new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: ['2023-A','2023-B','2024-A','2024-B','2025-A','2025-B','2026-A'],
+      datasets: [
+        { label:'Tasa abandono %', data:[24.1,22.8,21.3,20.5,19.7,18.9,18.1],
+          borderColor:'#e74c3c', backgroundColor:'#e74c3c22', tension:0.4, fill:true, borderWidth:2, pointRadius:5 },
+        { label:'Riesgo alto %', data:[15.2,14.5,13.8,13.2,12.8,12.4,12.0],
+          borderColor:'#8e44ad', backgroundColor:'#8e44ad11', tension:0.4, fill:true, borderWidth:2, pointRadius:5 },
+      ]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ font:{size:10}, boxWidth:12 } } },
+      scales:{ x:{ grid:{display:false}, ticks:{font:{size:9}} }, y:{ min:0, max:30, ticks:{font:{size:9}} } } }
+  });
+}
+
+function renderFacultadCharts() {
+  const ctx3 = document.getElementById('facultadRiskChart')?.getContext('2d');
+  if (ctx3) new Chart(ctx3, {
+    type: 'bar',
+    data: {
+      labels: FACULTADES.map(f=>f.nombre),
+      datasets: [
+        { label:'Alto',  data: FACULTADES.map(f=>f.alto),  backgroundColor:'#e74c3c', borderRadius:4 },
+        { label:'Medio', data: FACULTADES.map(f=>f.medio), backgroundColor:'#e67e22', borderRadius:4 },
+      ]
+    },
+    options: { responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      plugins:{ legend:{ position:'bottom', labels:{ font:{size:10}, boxWidth:12 } } },
+      scales:{ x:{ stacked:true, ticks:{font:{size:9}} }, y:{ stacked:true, grid:{display:false}, ticks:{font:{size:9}} } } }
+  });
+
+  const ctx4 = document.getElementById('facultadDimChart')?.getContext('2d');
+  if (ctx4) new Chart(ctx4, {
+    type: 'radar',
+    data: {
+      labels: DIM_NAMES.map(n => n.split(' ')[1]),
+      datasets: FACULTADES.slice(0,3).map((f,i) => ({
+        label: f.nombre, data: f.dims,
+        borderColor: ['#e74c3c','#3498db','#27ae60'][i],
+        backgroundColor: ['#e74c3c22','#3498db22','#27ae6022'][i],
+        borderWidth: 2, pointRadius: 3,
+      }))
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      scales:{ r:{ min:1, max:5, ticks:{stepSize:1, font:{size:8}, backdropColor:'transparent'}, grid:{color:'#e0e6ed'} } },
+      plugins:{ legend:{ position:'bottom', labels:{ font:{size:10}, boxWidth:10 } } } }
+  });
+}
+
+function renderModelCharts() {
+  const ctx5 = document.getElementById('modelCompareChart')?.getContext('2d');
+  if (ctx5) new Chart(ctx5, {
+    type: 'bar',
+    data: {
+      labels: ['Random Forest','XGBoost','Gradient Boosting','FNN','Stacking'],
+      datasets: [
+        { label:'AUC-ROC', data:[0.9622,0.9633,0.9609,0.9496,0.9639], backgroundColor:['#3498db','#27ae60','#e67e22','#9b59b6','#e74c3c'], borderRadius:6 }
+      ]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ x:{ grid:{display:false}, ticks:{font:{size:9}} }, y:{ min:0.90, max:0.98, ticks:{font:{size:9}} } } }
+  });
+
+  const ctx6 = document.getElementById('shapChart')?.getContext('2d');
+  if (ctx6) new Chart(ctx6, {
+    type: 'bar',
+    data: {
+      labels: ['D3 Motivación','D1 Bienestar','D6 Afiliación','D4 Resiliencia','D2 Autopercepción','D5 Relaciones','Promedio','Materias Rep.','Edad','Financiero'],
+      datasets: [{ label:'SHAP Value (impacto)',
+        data:[0.42,0.38,0.35,0.29,0.24,0.19,0.17,0.14,0.09,0.07],
+        backgroundColor:'#8e44ad', borderRadius:4 }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      plugins:{ legend:{display:false} },
+      scales:{ x:{ grid:{color:'#f0f0f0'}, ticks:{font:{size:9}} }, y:{ grid:{display:false}, ticks:{font:{size:9}} } } }
+  });
+}
+
+// ─── TAB SWITCHING ─────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  setTimeout(() => {
+    if (id === 'overview')    renderOverviewCharts();
+    if (id === 'facultades')  { renderFacultades(); renderFacultadCharts(); }
+    if (id === 'modelo')      renderModelCharts();
+    if (id === 'usuarios')    renderUsers();
+  }, 50);
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    const u = JSON.parse(localStorage.getItem('atenea_user') || '{}');
+    if (u.nombre) document.getElementById('userName').textContent = u.nombre;
+  } catch(e) {}
+  renderInstitutionalDims();
+  renderActivity();
+  renderSystemStatus();
+  renderOverviewCharts();
+});
+
+// Cerrar modal al clic afuera
+document.addEventListener('click', e => {
+  const modal = document.getElementById('addUserModal');
+  if (e.target === modal) modal.style.display = 'none';
+});
+
+// Mini helper for table button
+function btn_action(extra) {
+  return `<button style="padding:4px 10px;border-radius:6px;border:1.5px solid var(--border);font-size:0.75rem;cursor:pointer;background:white"${extra||''}>`;
+}
+</script>
+</body>
+</html>
