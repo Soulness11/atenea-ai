@@ -239,14 +239,17 @@ def cargar_student_depression(path: Path) -> pd.DataFrame:
     print(f"    Columnas: {list(df.columns)}")
 
     # Verificar si tiene etiqueta de deserción; si no, usar Depression como proxy D1
+    # Columnas reales del dataset fatemeh-mndz/Depression-Student:
+    # Gender, Age, Academic Pressure, Study Satisfaction, Sleep Duration,
+    # Dietary Habits, Have you ever had suicidal thoughts ?, Study Hours,
+    # Financial Stress, Family History of Mental Illness, Depression
     if 'Dropout' in df.columns or 'dropout' in df.columns:
         col_target = [c for c in df.columns if 'dropout' in c.lower()][0]
         df['desercion'] = df[col_target].astype(int)
     elif 'Depression' in df.columns:
-        # Depression severa como indicador de riesgo (proxy, no etiqueta directa)
-        df['desercion'] = (df['Depression'] >= 3).astype(int)  # escala 1-5
+        # Depression Yes/No → proxy de riesgo de abandono (correlación bien documentada)
+        df['desercion'] = (df['Depression'].str.strip().str.lower() == 'yes').astype(int)
     else:
-        # No hay etiqueta → usar para enriquecimiento pero sin etiqueta propia
         print("    ⚠️  Sin etiqueta de deserción. Usar solo para enriquecimiento de features.")
         return None
 
@@ -254,30 +257,59 @@ def cargar_student_depression(path: Path) -> pd.DataFrame:
         """Normaliza al rango 1-5, opcionalmente invirtiendo la escala."""
         if col not in df.columns:
             return pd.Series(np.random.uniform(2.5, 3.5, len(df)))
-        s = df[col].fillna(df[col].median()).astype(float)
+        s = df[col].fillna(df[col].median() if df[col].dtype != object else df[col].mode()[0])
+        # Si es categórico (p.ej. Sleep Duration: "5-6 hours"), convertir a numérico
+        if s.dtype == object:
+            sleep_map = {'Less than 5 hours': 1, '5-6 hours': 2, '7-8 hours': 4,
+                         'More than 8 hours': 5, 'Moderate': 3, 'Unhealthy': 2, 'Healthy': 4}
+            s = s.map(sleep_map).fillna(3).astype(float)
+        else:
+            s = s.astype(float)
         s_n = 1 + 4 * ((s - s.min()) / (s.max() - s.min() + 1e-8)).clip(0, 1)
         return (6 - s_n) if inv else s_n  # invertir si mayor valor = peor
 
-    d1 = 0.5 * norm15_generic('Sleep Duration', df) + \
-         0.5 * norm15_generic('Financial Stress', df, inv=True)
+    # D1 Bienestar Emocional: sueño + estrés financiero (invertido) + pensamientos suicidas (invertido)
+    d1_sleep = norm15_generic('Sleep Duration', df)
+    d1_fin   = norm15_generic('Financial Stress', df, inv=True)
+    d1_sui   = pd.Series(np.where(
+        df.get('Have you ever had suicidal thoughts ?', pd.Series(['No']*len(df)))
+          .str.strip().str.lower() == 'yes', 1.0, 4.5))
+    d1 = (0.4 * d1_sleep + 0.35 * d1_fin + 0.25 * d1_sui).clip(1, 5)
+
+    # D2 Autopercepción Académica: satisfacción con el estudio
     d2 = norm15_generic('Study Satisfaction', df)
-    d3 = 0.6 * norm15_generic('Study Satisfaction', df) + \
-         0.4 * norm15_generic('Academic Pressure', df, inv=True)
-    d4 = norm15_generic('Coping Strategies', df) if 'Coping Strategies' in df.columns \
-         else pd.Series(np.random.uniform(2, 4, len(df)))
-    d5 = norm15_generic('Family Conflict', df, inv=True) if 'Family Conflict' in df.columns \
-         else pd.Series(np.random.uniform(2.5, 4, len(df)))
-    d6 = norm15_generic('Campus Involvement', df) if 'Campus Involvement' in df.columns \
-         else pd.Series(np.random.uniform(2, 4, len(df)))
+
+    # D3 Motivación y Compromiso: satisfacción + horas de estudio – presión académica
+    d3 = (0.5 * norm15_generic('Study Satisfaction', df) +
+          0.3 * norm15_generic('Study Hours', df) +
+          0.2 * norm15_generic('Academic Pressure', df, inv=True)).clip(1, 5)
+
+    # D4 Resiliencia: historia familiar de salud mental como factor de riesgo
+    d4_fam = pd.Series(np.where(
+        df.get('Family History of Mental Illness', pd.Series(['No']*len(df)))
+          .str.strip().str.lower() == 'yes', 2.5, 3.8))
+    d4 = (d4_fam + np.random.normal(0, 0.3, len(df))).clip(1, 5)
+
+    # D5 Relaciones Interpersonales: hábitos dietéticos como proxy de autocuidado social
+    d5 = (norm15_generic('Dietary Habits', df) +
+          np.random.normal(0, 0.25, len(df))).clip(1, 5)
+
+    # D6 Afiliación Institucional: presión académica moderada = mayor afiliación
+    d6 = (norm15_generic('Academic Pressure', df, inv=True) * 0.6 +
+          pd.Series(np.random.uniform(2.5, 4.0, len(df))) * 0.4).clip(1, 5)
 
     gender_col = [c for c in df.columns if 'gender' in c.lower() or 'sex' in c.lower()]
-    sexo = df[gender_col[0]].map({'Male': 0, 'Female': 1, 'M': 0, 'F': 1,
-                                   0: 0, 1: 1}).fillna(0).astype(int) \
-           if gender_col else pd.Series(np.random.randint(0, 2, len(df)))
+    if gender_col:
+        sexo = df[gender_col[0]].map({'Male': 0, 'Female': 1, 'M': 0, 'F': 1,
+                                      0: 0, 1: 1}).fillna(0).astype(int)
+    else:
+        sexo = pd.Series(np.random.randint(0, 2, len(df)))
 
     age_col = [c for c in df.columns if 'age' in c.lower()]
-    edad = df[age_col[0]].clip(17, 35).fillna(21).astype(int) \
-           if age_col else pd.Series(np.random.randint(18, 26, len(df)))
+    if age_col:
+        edad = pd.to_numeric(df[age_col[0]], errors='coerce').fillna(21).clip(17, 35).astype(int)
+    else:
+        edad = pd.Series(np.random.randint(18, 26, len(df)))
 
     df_clean = pd.DataFrame({
         'id_participante': [f"DEP{str(i+1).zfill(5)}" for i in range(len(df))],
@@ -516,7 +548,8 @@ if __name__ == "__main__":
     print(f"   {'Métrica':<30} {'Sintético':>12} {'Integrado':>12}")
     print(f"   {'-'*55}")
     print(f"   {'N (estudiantes)':<30} {'500':>12} {len(df_total):>12}")
-    print(f"   {'Tasa deserción':<30} {'28.0%':>12} {df_total['desercion'].mean():.1%:>12}")
+    tasa_real = f"{df_total['desercion'].mean():.1%}"
+    print(f"   {'Tasa deserción':<30} {'28.0%':>12} {tasa_real:>12}")
     print(f"   {'N variables':<30} {'19':>12} {df_ml.shape[1]-1:>12}")
     print(f"\n⚠️  NOTA PARA LA TESIS (§7.2):")
     print("   Las métricas con datos reales serán más bajas que con datos sintéticos.")

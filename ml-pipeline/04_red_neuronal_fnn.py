@@ -37,7 +37,7 @@ print("Arquitectura: entrada → 128 → 64 → 32 → salida (sigmoid)")
 print("Tesis DTE-UAQ | Predicción de Deserción Escolar")
 print("=" * 65)
 
-df = pd.read_csv("dataset_ml_encoded.csv")
+df = pd.read_csv("dataset_real_encoded.csv")
 X = df.drop(columns=["desercion"])
 y = df["desercion"]
 feat_names = X.columns.tolist()

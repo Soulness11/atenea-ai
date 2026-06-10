@@ -33,7 +33,7 @@ print("ANÁLISIS 3/4 — GRADIENT BOOSTING")
 print("Tesis DTE-UAQ | Predicción de Deserción Escolar")
 print("=" * 65)
 
-df = pd.read_csv("dataset_ml_encoded.csv")
+df = pd.read_csv("dataset_real_encoded.csv")
 X = df.drop(columns=["desercion"])
 y = df["desercion"]
 

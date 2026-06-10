@@ -14,6 +14,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import seaborn as sns
 import os, warnings
 warnings.filterwarnings('ignore')
@@ -42,7 +43,7 @@ print("Tesis DTE-UAQ | Predicción de Deserción Escolar")
 print("=" * 70)
 
 # ─── 1. CARGA Y PREPROCESAMIENTO ─────────────────────────────────────────────
-df = pd.read_csv("dataset_ml_encoded.csv")
+df = pd.read_csv("dataset_real_encoded.csv")
 X = df.drop(columns=["desercion"])
 y = df["desercion"]
 feat_names = X.columns.tolist()
@@ -77,7 +78,7 @@ estimadores_capa1 = [
 # ─── 3. META-APRENDIZ — FNN (Capa 2) ─────────────────────────────────────────
 # La FNN recibe las probabilidades predichas por RF, XGBoost y GB
 meta_aprendiz = MLPClassifier(
-    hidden_layers=(64, 32),
+    hidden_layer_sizes=(64, 32),
     activation='relu',
     solver='adam',
     alpha=0.001,              # Regularización L2
@@ -222,7 +223,7 @@ ax5.set_xlim(0, 10); ax5.set_ylim(0, 6)
 
 # Capa de entrada
 ax5.text(1.0, 5.5, 'DATOS DE ENTRADA', ha='center', fontsize=9, fontweight='bold', color='#2c3e50')
-ax5.add_patch(plt.FancyBboxPatch((0.1, 4.2), 1.8, 0.9, boxstyle="round,pad=0.1",
+ax5.add_patch(mpatches.FancyBboxPatch((0.1, 4.2), 1.8, 0.9, boxstyle="round,pad=0.1",
               facecolor='#ecf0f1', edgecolor='#bdc3c7', lw=1.5))
 ax5.text(1.0, 4.65, 'Variables\nPsicoemocionales\n+ Académicas', ha='center', fontsize=7.5, color='#2c3e50')
 
@@ -230,7 +231,7 @@ ax5.text(1.0, 4.65, 'Variables\nPsicoemocionales\n+ Académicas', ha='center', f
 for i, (nombre, color) in enumerate(zip(['Random Forest', 'XGBoost', 'Gradient\nBoosting'],
                                          ['#3498db', '#e67e22', '#9b59b6'])):
     x = 3.5 + i * 1.8
-    ax5.add_patch(plt.FancyBboxPatch((x - 0.7, 3.2), 1.4, 1.2,
+    ax5.add_patch(mpatches.FancyBboxPatch((x - 0.7, 3.2), 1.4, 1.2,
                   boxstyle="round,pad=0.1", facecolor=color, edgecolor='white', lw=1.5, alpha=0.85))
     ax5.text(x, 3.8, nombre, ha='center', fontsize=8, fontweight='bold', color='white')
     ax5.annotate('', xy=(x, 3.2), xytext=(1.9, 4.65),
@@ -245,7 +246,7 @@ for x in [3.5, 5.3, 7.1]:
                  arrowprops=dict(arrowstyle='->', color='#e74c3c', lw=1.5))
 
 # Meta-aprendiz FNN
-ax5.add_patch(plt.FancyBboxPatch((3.8, 1.0), 3.0, 1.0,
+ax5.add_patch(mpatches.FancyBboxPatch((3.8, 1.0), 3.0, 1.0,
               boxstyle="round,pad=0.15", facecolor='#e74c3c', edgecolor='white', lw=2, alpha=0.9))
 ax5.text(5.3, 1.55, 'META-APRENDIZ: FNN', ha='center', fontsize=9, fontweight='bold', color='white')
 ax5.text(5.3, 1.15, '128 → 64 → 32 neuronas | ReLU + Sigmoid', ha='center', fontsize=7.5, color='#ffeaa7')

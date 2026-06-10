@@ -48,7 +48,7 @@ print("ANÁLISIS 1/4 — RANDOM FOREST")
 print("Tesis DTE-UAQ | Predicción de Deserción Escolar")
 print("=" * 65)
 
-df = pd.read_csv("dataset_ml_encoded.csv")
+df = pd.read_csv("dataset_real_encoded.csv")
 X = df.drop(columns=["desercion"])
 y = df["desercion"]
 
@@ -163,10 +163,18 @@ print("\n📊 Figura guardada en: resultados/RF/RF_resultados.png")
 # ─── 7. ANÁLISIS SHAP ───────────────────────────────────────────────────────
 print("\n🔍 Calculando valores SHAP...")
 explainer = shap.TreeExplainer(rf_final)
-shap_values = explainer.shap_values(X_test[:100])  # Muestra de 100 para velocidad
+shap_raw = explainer.shap_values(X_test[:100])  # Muestra de 100 para velocidad
+# Compatibilidad shap >= 0.40: puede devolver ndarray 3D (n, features, classes)
+# o lista [class0, class1]. Extraer valores para la clase positiva (deserción=1)
+if isinstance(shap_raw, np.ndarray) and shap_raw.ndim == 3:
+    shap_values = shap_raw[:, :, 1]
+elif isinstance(shap_raw, list):
+    shap_values = shap_raw[1]
+else:
+    shap_values = shap_raw
 
 fig_shap, ax_shap = plt.subplots(1, 1, figsize=(10, 7))
-shap.summary_plot(shap_values[1], X_test[:100], feature_names=feat_names,
+shap.summary_plot(shap_values, X_test[:100], feature_names=feat_names,
                   show=False, max_display=12)
 plt.title('SHAP Summary Plot — Random Forest\nContribución de cada variable a la predicción de deserción',
           fontsize=11, fontweight='bold')
