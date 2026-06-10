@@ -321,6 +321,175 @@
   /* ═══ CHART COMPAT ═══ */
   canvas { max-width: 100%; }
 
+  /* ═══ MENÚ DE USUARIO ═══ */
+  .user-menu-wrap { position: relative; }
+  .user-trigger {
+    display: flex; align-items: center; gap: 10px; cursor: pointer;
+    padding: 6px 12px 6px 6px; border-radius: 30px;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    transition: background 0.18s;
+    user-select: none;
+  }
+  .user-trigger:hover { background: rgba(255,255,255,0.12); }
+  .user-trigger-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.22); display: flex; align-items: center;
+    justify-content: center; font-size: 17px;
+    border: 2px solid rgba(255,255,255,0.35); flex-shrink: 0;
+  }
+  .user-trigger-info { line-height: 1.2; }
+  .user-trigger-info .uname { font-size: 0.87rem; font-weight: 700; }
+  .user-trigger-info .urole { font-size: 0.72rem; opacity: 0.75; }
+  .user-trigger-arrow { font-size: 0.65rem; opacity: 0.7; transition: transform 0.2s; }
+  .user-trigger.open .user-trigger-arrow { transform: rotate(180deg); }
+
+  .user-dropdown {
+    position: absolute; top: calc(100% + 10px); right: 0;
+    background: white; border-radius: 14px; width: 240px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18); border: 1px solid var(--border);
+    z-index: 500; overflow: hidden;
+    opacity: 0; transform: translateY(-8px) scale(0.97);
+    pointer-events: none; transition: all 0.18s ease;
+  }
+  .user-dropdown.open {
+    opacity: 1; transform: translateY(0) scale(1);
+    pointer-events: all;
+  }
+  .dropdown-header {
+    padding: 16px 18px; background: linear-gradient(135deg,#1a3a5c,#2c6fad);
+    color: white;
+  }
+  .dropdown-header .dh-name  { font-size: 0.92rem; font-weight: 700; }
+  .dropdown-header .dh-email { font-size: 0.75rem; opacity: 0.8; margin-top: 2px; }
+  .dropdown-header .dh-badge {
+    display: inline-block; margin-top: 6px; font-size: 0.7rem; font-weight: 700;
+    background: rgba(255,255,255,0.2); border-radius: 10px; padding: 2px 9px;
+  }
+  .dropdown-sep { height: 1px; background: var(--border); margin: 4px 0; }
+  .dropdown-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 18px; font-size: 0.84rem; color: var(--text);
+    cursor: pointer; transition: background 0.14s; border: none;
+    background: none; width: 100%; text-align: left; font-family: inherit;
+  }
+  .dropdown-item:hover { background: #f4f7fb; }
+  .dropdown-item .di-icon { font-size: 1rem; width: 22px; text-align: center; flex-shrink: 0; }
+  .dropdown-item .di-label { flex: 1; }
+  .dropdown-item .di-arrow { font-size: 0.7rem; color: var(--muted); }
+  .dropdown-item.danger { color: var(--danger); }
+  .dropdown-item.danger:hover { background: #fff5f5; }
+
+  /* ═══ MODAL DE PERFIL ═══ */
+  .profile-overlay {
+    position: fixed; inset: 0; background: rgba(15,30,50,0.55);
+    backdrop-filter: blur(3px); z-index: 900;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.22s;
+  }
+  .profile-overlay.open { opacity: 1; pointer-events: all; }
+  .profile-modal {
+    background: white; border-radius: 18px; width: 540px; max-width: 96vw;
+    max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    transform: scale(0.96); transition: transform 0.22s;
+  }
+  .profile-overlay.open .profile-modal { transform: scale(1); }
+  .profile-modal-header {
+    padding: 20px 24px 0; display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .profile-modal-header h2 { font-size: 1.1rem; font-weight: 700; }
+  .profile-close-btn {
+    width: 32px; height: 32px; border-radius: 50%; border: none;
+    background: #f0f4f8; cursor: pointer; font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .profile-close-btn:hover { background: #dce1e7; }
+
+  .profile-tabs {
+    display: flex; gap: 2px; padding: 14px 24px 0; flex-shrink: 0;
+    border-bottom: 2px solid var(--border);
+  }
+  .ptab-btn {
+    padding: 8px 16px; border: none; background: none; cursor: pointer;
+    font-size: 0.82rem; font-family: inherit; color: var(--muted);
+    border-bottom: 2px solid transparent; margin-bottom: -2px;
+    transition: all 0.15s; display: flex; align-items: center; gap: 6px;
+    border-radius: 8px 8px 0 0;
+  }
+  .ptab-btn:hover { color: var(--text); background: #f8f9fa; }
+  .ptab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+  .profile-body {
+    flex: 1; overflow-y: auto; padding: 22px 24px 8px;
+  }
+  .pfield-group { margin-bottom: 18px; }
+  .pfield-label {
+    display: block; font-size: 0.78rem; font-weight: 700;
+    color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .pfield-input {
+    width: 100%; padding: 10px 13px; border-radius: 10px;
+    border: 1.5px solid var(--border); font-family: inherit; font-size: 0.88rem;
+    color: var(--text); background: white; transition: border-color 0.15s;
+  }
+  .pfield-input:focus { outline: none; border-color: var(--accent); }
+  .pfield-input:disabled { background: #f8f9fa; color: var(--muted); cursor: not-allowed; }
+  .pfield-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .pfield-hint { font-size: 0.74rem; color: var(--muted); margin-top: 4px; }
+
+  .avatar-edit-wrap {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 22px;
+    padding: 16px; background: #f8f9fa; border-radius: 12px;
+  }
+  .avatar-big {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: linear-gradient(135deg,#2c6fad,#16a085);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; flex-shrink: 0; position: relative; cursor: pointer;
+  }
+  .avatar-edit-overlay {
+    position: absolute; inset: 0; border-radius: 50%; background: rgba(0,0,0,0.35);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; opacity: 0; transition: opacity 0.15s;
+  }
+  .avatar-big:hover .avatar-edit-overlay { opacity: 1; }
+
+  .password-strength { height: 5px; border-radius: 3px; margin-top: 6px; background: #eee; overflow: hidden; }
+  .password-strength-fill { height: 100%; border-radius: 3px; transition: width 0.3s, background 0.3s; width: 0%; }
+
+  .toggle-setting {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+  .toggle-setting:last-child { border-bottom: none; }
+  .ts-info .ts-name { font-size: 0.87rem; font-weight: 600; }
+  .ts-info .ts-desc { font-size: 0.76rem; color: var(--muted); margin-top: 2px; }
+  .toggle-switch {
+    width: 44px; height: 24px; border-radius: 12px; background: #ddd;
+    cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0;
+  }
+  .toggle-switch.on { background: var(--teal); }
+  .toggle-switch::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 18px; height: 18px; border-radius: 50%; background: white;
+    transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle-switch.on::after { transform: translateX(20px); }
+
+  .profile-modal-footer {
+    padding: 16px 24px; border-top: 1px solid var(--border);
+    display: flex; gap: 10px; justify-content: flex-end; flex-shrink: 0;
+  }
+  .pbtn { padding: 10px 22px; border-radius: 10px; font-size: 0.87rem; font-weight: 700; cursor: pointer; font-family: inherit; border: none; }
+  .pbtn-cancel { background: #f0f4f8; color: var(--muted); }
+  .pbtn-cancel:hover { background: #dce1e7; }
+  .pbtn-save   { background: linear-gradient(135deg,var(--accent),var(--teal)); color: white; }
+  .pbtn-save:hover { opacity: 0.9; }
+  .pbtn-danger { background: #fdecea; color: var(--danger); }
+  .pbtn-danger:hover { background: #fad7d3; }
+
   @media (max-width: 900px) {
     .grid-3, .grid-radar { grid-template-columns: 1fr 1fr; }
     .grid-2 { grid-template-columns: 1fr; }
@@ -346,11 +515,60 @@
     </div>
     <div class="header-student">
       <div class="notification-btn" title="Notificaciones">🔔<span class="notif-dot"></span></div>
-      <div>
-        <div class="student-name">Luis Francisco Pardo</div>
-        <div class="student-info">Doctorado en Tecnología Educativa · Semestre 4</div>
+
+      <!-- Menú de usuario -->
+      <div class="user-menu-wrap" id="userMenuWrap">
+        <div class="user-trigger" id="userTrigger" onclick="toggleUserMenu()">
+          <div class="user-trigger-avatar" id="headerAvatar">🎓</div>
+          <div class="user-trigger-info">
+            <div class="uname" id="headerName">Luis Francisco Pardo</div>
+            <div class="urole">Doctorado · Semestre 4</div>
+          </div>
+          <span class="user-trigger-arrow">▼</span>
+        </div>
+
+        <div class="user-dropdown" id="userDropdown">
+          <div class="dropdown-header">
+            <div class="dh-name" id="ddName">Luis Francisco Pardo</div>
+            <div class="dh-email" id="ddEmail">l.pardo@uaq.edu.mx</div>
+            <span class="dh-badge">🎓 Estudiante · DTE</span>
+          </div>
+
+          <div style="padding: 6px 0">
+            <button class="dropdown-item" onclick="openProfileModal('datos')">
+              <span class="di-icon">👤</span>
+              <span class="di-label">Editar perfil</span>
+              <span class="di-arrow">›</span>
+            </button>
+            <button class="dropdown-item" onclick="openProfileModal('seguridad')">
+              <span class="di-icon">🔐</span>
+              <span class="di-label">Cambiar contraseña</span>
+              <span class="di-arrow">›</span>
+            </button>
+            <button class="dropdown-item" onclick="openProfileModal('notificaciones')">
+              <span class="di-icon">🔔</span>
+              <span class="di-label">Notificaciones</span>
+              <span class="di-arrow">›</span>
+            </button>
+            <button class="dropdown-item" onclick="openProfileModal('privacidad')">
+              <span class="di-icon">🛡️</span>
+              <span class="di-label">Privacidad y datos</span>
+              <span class="di-arrow">›</span>
+            </button>
+          </div>
+
+          <div class="dropdown-sep"></div>
+
+          <div style="padding: 6px 0 8px">
+            <button class="dropdown-item" onclick="cerrarSesion()">
+              <span class="di-icon">🚪</span>
+              <span class="di-label" style="font-weight:700">Cerrar sesión</span>
+            </button>
+          </div>
+        </div>
       </div>
-      <div class="student-avatar">🎓</div>
+      <!-- /Menú de usuario -->
+
     </div>
   </div>
 </header>
@@ -1606,6 +1824,428 @@ document.addEventListener('DOMContentLoaded', () => {
   renderHistorialTable();
   renderRadarChart();
 });
+
+
+// ═══════════════════════════════════════════════════════════
+// MENÚ DE USUARIO + MODAL DE PERFIL
+// ═══════════════════════════════════════════════════════════
+
+// ── Dropdown ──────────────────────────────────────────────
+function toggleUserMenu() {
+  const trigger  = document.getElementById('userTrigger');
+  const dropdown = document.getElementById('userDropdown');
+  const isOpen   = dropdown.classList.contains('open');
+  dropdown.classList.toggle('open', !isOpen);
+  trigger.classList.toggle('open', !isOpen);
+}
+
+// Cerrar al clic fuera
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('userMenuWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('userDropdown')?.classList.remove('open');
+    document.getElementById('userTrigger')?.classList.remove('open');
+  }
+});
+
+// ── Cerrar sesión ─────────────────────────────────────────
+function cerrarSesion() {
+  if (!confirm('¿Deseas cerrar tu sesión en Atenea AI?')) return;
+  localStorage.removeItem('atenea_token');
+  localStorage.removeItem('atenea_role');
+  localStorage.removeItem('atenea_user');
+  window.location.href = 'login.html';
+}
+
+// ── Modal de Perfil ───────────────────────────────────────
+const PTABS = ['datos', 'seguridad', 'notificaciones', 'privacidad'];
+
+function openProfileModal(tabId) {
+  document.getElementById('userDropdown').classList.remove('open');
+  document.getElementById('userTrigger').classList.remove('open');
+  loadProfileFromStorage();
+  document.getElementById('profileOverlay').classList.add('open');
+  showProfileTab(tabId);
+}
+
+function closeProfileModal() {
+  document.getElementById('profileOverlay').classList.remove('open');
+}
+
+function showProfileTab(id) {
+  PTABS.forEach(t => {
+    document.getElementById('ptab-btn-' + t)?.classList.toggle('active', t === id);
+    const panel = document.getElementById('ptab-' + t);
+    if (panel) panel.style.display = t === id ? 'block' : 'none';
+  });
+}
+
+// ── Persistencia de perfil ────────────────────────────────
+function loadProfileFromStorage() {
+  const saved = JSON.parse(localStorage.getItem('atenea_perfil_usuario') || '{}');
+  const defaults = {
+    nombre:    'Luis Francisco Pardo',
+    apellidos: 'Pardo Perea',
+    email:     'l.pardo@uaq.edu.mx',
+    telefono:  '',
+    matricula: 'UAQ-DTE-0042',
+    programa:  'Doctorado en Tecnología Educativa',
+    semestre:  '4',
+    asesor:    'Dr. Juan Ramírez López',
+    avatar:    '🎓',
+  };
+  const p = { ...defaults, ...saved };
+
+  // Rellenar campos del formulario
+  Object.entries(p).forEach(([k, v]) => {
+    const el = document.getElementById('pf-' + k);
+    if (el) el.value = v;
+  });
+
+  // Actualizar header con el nombre actual
+  const display = p.nombre + (p.apellidos ? ' ' + p.apellidos.split(' ')[0] : '');
+  document.getElementById('headerName').textContent = display;
+  document.getElementById('ddName').textContent     = display;
+  document.getElementById('ddEmail').textContent    = p.email;
+  document.getElementById('headerAvatar').textContent = p.avatar;
+  document.getElementById('profileAvatarDisplay').textContent = p.avatar;
+}
+
+function saveProfile() {
+  const fields = ['nombre','apellidos','email','telefono','matricula','programa','semestre','asesor','avatar'];
+  const data = {};
+  fields.forEach(k => {
+    const el = document.getElementById('pf-' + k);
+    if (el) data[k] = el.value.trim();
+  });
+  localStorage.setItem('atenea_perfil_usuario', JSON.stringify(data));
+  loadProfileFromStorage();
+  showSaveToast('✅ Perfil actualizado correctamente');
+  closeProfileModal();
+}
+
+// ── Cambio de contraseña ──────────────────────────────────
+function checkPasswordStrength(val) {
+  const fill = document.getElementById('pwStrengthFill');
+  const hint = document.getElementById('pwStrengthHint');
+  if (!fill) return;
+  let score = 0;
+  if (val.length >= 8)           score++;
+  if (/[A-Z]/.test(val))         score++;
+  if (/[0-9]/.test(val))         score++;
+  if (/[^A-Za-z0-9]/.test(val))  score++;
+  const colors = ['#e74c3c','#e67e22','#f1c40f','#27ae60'];
+  const labels = ['Muy débil','Débil','Regular','Fuerte'];
+  fill.style.width   = (score * 25) + '%';
+  fill.style.background = colors[score - 1] || '#eee';
+  if (hint) hint.textContent = val.length > 0 ? labels[score - 1] || '' : '';
+}
+
+function savePassword() {
+  const actual  = document.getElementById('pf-pw-actual')?.value;
+  const nueva   = document.getElementById('pf-pw-nueva')?.value;
+  const confirma= document.getElementById('pf-pw-confirma')?.value;
+  if (!actual)              { alert('Ingresa tu contraseña actual.'); return; }
+  if (!nueva || nueva.length < 6) { alert('La nueva contraseña debe tener al menos 6 caracteres.'); return; }
+  if (nueva !== confirma)   { alert('Las contraseñas no coinciden.'); return; }
+  // En producción: llamar a POST /auth/change-password
+  document.getElementById('pf-pw-actual').value   = '';
+  document.getElementById('pf-pw-nueva').value    = '';
+  document.getElementById('pf-pw-confirma').value = '';
+  document.getElementById('pwStrengthFill').style.width = '0%';
+  showSaveToast('🔐 Contraseña actualizada correctamente');
+  closeProfileModal();
+}
+
+// ── Cambiar avatar emoji ──────────────────────────────────
+const AVATARES = ['🎓','👩‍🎓','👨‍💻','🦉','⭐','🌟','🎯','💡','🚀','🌱','🦋','🐉'];
+function openAvatarPicker() {
+  const current = document.getElementById('pf-avatar')?.value || '🎓';
+  const choice  = prompt(
+    'Elige tu avatar (copia y pega uno):\n' + AVATARES.join('  '),
+    current
+  );
+  if (choice && choice.trim()) {
+    const v = choice.trim();
+    document.getElementById('pf-avatar').value = v;
+    document.getElementById('profileAvatarDisplay').textContent = v;
+  }
+}
+
+// ── Toast de confirmación ─────────────────────────────────
+function showSaveToast(msg) {
+  let toast = document.getElementById('saveToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'saveToast';
+    toast.style.cssText = `position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
+      background:#2c3e50;color:white;padding:12px 24px;border-radius:12px;font-size:0.88rem;font-weight:600;
+      z-index:9999;opacity:0;transition:all 0.3s;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,0.25)`;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  toast.style.transform = 'translateX(-50%) translateY(0)';
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(20px)';
+  }, 3000);
+}
+
+// ── Cerrar modal al clic en overlay ──────────────────────
+document.getElementById('profileOverlay')?.addEventListener('click', e => {
+  if (e.target.id === 'profileOverlay') closeProfileModal();
+});
+
 </script>
+
+<!-- ═══ MODAL DE PERFIL ═══ -->
+<div class="profile-overlay" id="profileOverlay">
+  <div class="profile-modal">
+
+    <!-- Cabecera -->
+    <div class="profile-modal-header">
+      <h2>⚙️ Mi Cuenta</h2>
+      <button class="profile-close-btn" onclick="closeProfileModal()">✕</button>
+    </div>
+
+    <!-- Tabs de navegación -->
+    <div class="profile-tabs">
+      <button class="ptab-btn active" id="ptab-btn-datos"          onclick="showProfileTab('datos')">👤 Perfil</button>
+      <button class="ptab-btn"        id="ptab-btn-seguridad"       onclick="showProfileTab('seguridad')">🔐 Seguridad</button>
+      <button class="ptab-btn"        id="ptab-btn-notificaciones"  onclick="showProfileTab('notificaciones')">🔔 Avisos</button>
+      <button class="ptab-btn"        id="ptab-btn-privacidad"      onclick="showProfileTab('privacidad')">🛡️ Privacidad</button>
+    </div>
+
+    <!-- Cuerpo scrollable -->
+    <div class="profile-body">
+
+      <!-- ── PANEL: DATOS PERSONALES ── -->
+      <div id="ptab-datos">
+
+        <!-- Avatar -->
+        <div class="avatar-edit-wrap">
+          <div class="avatar-big" onclick="openAvatarPicker()" title="Cambiar avatar">
+            <span id="profileAvatarDisplay" style="font-size:28px">🎓</span>
+            <div class="avatar-edit-overlay">✏️</div>
+          </div>
+          <div>
+            <div style="font-weight:700;font-size:0.92rem" id="avatarNameDisplay">Luis Francisco Pardo</div>
+            <div style="font-size:0.77rem;color:var(--muted);margin-top:3px">Haz clic en el avatar para cambiarlo</div>
+            <input type="hidden" id="pf-avatar" value="🎓">
+          </div>
+        </div>
+
+        <div class="pfield-row">
+          <div class="pfield-group">
+            <label class="pfield-label">Nombre(s)</label>
+            <input class="pfield-input" id="pf-nombre" type="text" placeholder="Luis Francisco">
+          </div>
+          <div class="pfield-group">
+            <label class="pfield-label">Apellidos</label>
+            <input class="pfield-input" id="pf-apellidos" type="text" placeholder="Pardo Perea">
+          </div>
+        </div>
+
+        <div class="pfield-group">
+          <label class="pfield-label">Correo electrónico</label>
+          <input class="pfield-input" id="pf-email" type="email" placeholder="correo@uaq.edu.mx">
+          <div class="pfield-hint">Este correo se usa para notificaciones del sistema.</div>
+        </div>
+
+        <div class="pfield-group">
+          <label class="pfield-label">Teléfono (opcional)</label>
+          <input class="pfield-input" id="pf-telefono" type="tel" placeholder="+52 442 000 0000">
+        </div>
+
+        <div style="height:1px;background:var(--border);margin:18px 0"></div>
+        <div style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px">Datos académicos</div>
+
+        <div class="pfield-row">
+          <div class="pfield-group">
+            <label class="pfield-label">Matrícula</label>
+            <input class="pfield-input" id="pf-matricula" type="text" disabled>
+            <div class="pfield-hint">Solo editable por administración.</div>
+          </div>
+          <div class="pfield-group">
+            <label class="pfield-label">Semestre actual</label>
+            <input class="pfield-input" id="pf-semestre" type="number" min="1" max="12">
+          </div>
+        </div>
+
+        <div class="pfield-group">
+          <label class="pfield-label">Programa</label>
+          <input class="pfield-input" id="pf-programa" type="text" disabled>
+          <div class="pfield-hint">Solo editable por administración.</div>
+        </div>
+
+        <div class="pfield-group">
+          <label class="pfield-label">Asesor / Tutor principal</label>
+          <input class="pfield-input" id="pf-asesor" type="text" placeholder="Dr. Nombre Apellido">
+        </div>
+
+      </div>
+      <!-- /ptab-datos -->
+
+      <!-- ── PANEL: SEGURIDAD ── -->
+      <div id="ptab-seguridad" style="display:none">
+
+        <div style="background:#f8f9fa;border-radius:12px;padding:14px 16px;margin-bottom:20px;font-size:0.82rem;color:var(--muted);line-height:1.6">
+          🔒 Tu contraseña se almacena cifrada. Atenea AI nunca tendrá acceso a ella en texto plano.
+          Usa una combinación de letras mayúsculas, números y símbolos.
+        </div>
+
+        <div class="pfield-group">
+          <label class="pfield-label">Contraseña actual</label>
+          <input class="pfield-input" id="pf-pw-actual" type="password" placeholder="••••••••">
+        </div>
+        <div class="pfield-group">
+          <label class="pfield-label">Nueva contraseña</label>
+          <input class="pfield-input" id="pf-pw-nueva" type="password" placeholder="Mínimo 6 caracteres"
+            oninput="checkPasswordStrength(this.value)">
+          <div class="password-strength" style="margin-top:8px">
+            <div class="password-strength-fill" id="pwStrengthFill"></div>
+          </div>
+          <div class="pfield-hint" id="pwStrengthHint"></div>
+        </div>
+        <div class="pfield-group">
+          <label class="pfield-label">Confirmar nueva contraseña</label>
+          <input class="pfield-input" id="pf-pw-confirma" type="password" placeholder="Repite la contraseña">
+        </div>
+
+        <button class="pbtn pbtn-save" style="width:100%;margin-top:4px" onclick="savePassword()">
+          🔐 Actualizar contraseña
+        </button>
+
+        <div style="height:1px;background:var(--border);margin:22px 0"></div>
+        <div style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px">Sesiones activas</div>
+        <div style="background:#f8f9fa;border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px;font-size:0.82rem">
+          <span style="font-size:1.4rem">💻</span>
+          <div>
+            <div style="font-weight:600">Este dispositivo</div>
+            <div style="color:var(--muted);font-size:0.76rem">Última actividad: hoy · México</div>
+          </div>
+          <span style="margin-left:auto;background:#d4f4e2;color:#1e8449;font-size:0.72rem;font-weight:700;padding:3px 9px;border-radius:8px">Activa</span>
+        </div>
+
+      </div>
+      <!-- /ptab-seguridad -->
+
+      <!-- ── PANEL: NOTIFICACIONES ── -->
+      <div id="ptab-notificaciones" style="display:none">
+
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:16px;line-height:1.5">
+          Decide qué avisos recibes de Atenea AI. Puedes cambiar esto en cualquier momento.
+        </p>
+
+        <div class="toggle-setting">
+          <div class="ts-info">
+            <div class="ts-name">📊 Resultado de nueva evaluación</div>
+            <div class="ts-desc">Cuando completes el instrumento, recibirás un resumen</div>
+          </div>
+          <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-setting">
+          <div class="ts-info">
+            <div class="ts-name">⚠️ Alerta de cambio en mi riesgo</div>
+            <div class="ts-desc">Si tu nivel de riesgo sube, te notificamos de inmediato</div>
+          </div>
+          <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-setting">
+          <div class="ts-info">
+            <div class="ts-name">🎯 Recordatorio de bitácora</div>
+            <div class="ts-desc">Te recordamos registrar tu reflexión semanal (lunes)</div>
+          </div>
+          <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-setting">
+          <div class="ts-info">
+            <div class="ts-name">💡 Recursos y recomendaciones</div>
+            <div class="ts-desc">Nuevos recursos adaptados a tu estilo de aprendizaje</div>
+          </div>
+          <div class="toggle-switch" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-setting">
+          <div class="ts-info">
+            <div class="ts-name">📅 Resumen mensual</div>
+            <div class="ts-desc">Reporte de tu progreso al final de cada mes</div>
+          </div>
+          <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-setting">
+          <div class="ts-info">
+            <div class="ts-name">🏛️ Mensajes del programa</div>
+            <div class="ts-desc">Avisos del coordinador o asesor a través del sistema</div>
+          </div>
+          <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
+        </div>
+
+      </div>
+      <!-- /ptab-notificaciones -->
+
+      <!-- ── PANEL: PRIVACIDAD ── -->
+      <div id="ptab-privacidad" style="display:none">
+
+        <div style="background:#eaf6fb;border:1.5px solid #aed6f1;border-radius:12px;padding:13px 16px;font-size:0.82rem;color:#1a5276;line-height:1.6;margin-bottom:18px">
+          🔒 Tus datos en Atenea AI se usan <strong>únicamente</strong> para personalizar tu acompañamiento académico
+          dentro de la UAQ. Nunca se venden ni comparten con terceros.
+        </div>
+
+        <div class="toggle-setting">
+          <div class="ts-info">
+            <div class="ts-name">👩‍🏫 Mis docentes pueden ver mi perfil de riesgo</div>
+            <div class="ts-desc">Solo el nivel de riesgo y dimensiones, sin tu bitácora</div>
+          </div>
+          <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-setting">
+          <div class="ts-info">
+            <div class="ts-name">🧭 Orientadores pueden ver mi bitácora</div>
+            <div class="ts-desc">Solo si activas esta opción de forma explícita</div>
+          </div>
+          <div class="toggle-switch" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="toggle-setting">
+          <div class="ts-info">
+            <div class="ts-name">🔬 Contribuir a la investigación (anonimizado)</div>
+            <div class="ts-desc">Tus datos, sin identificadores, mejoran el modelo Atenea</div>
+          </div>
+          <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
+        </div>
+
+        <div style="height:1px;background:var(--border);margin:20px 0"></div>
+        <div style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px">Mis datos</div>
+
+        <div style="display:grid;gap:10px">
+          <button onclick="alert('Generando tu reporte personal...')"
+            style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);background:white;cursor:pointer;font-family:inherit;font-size:0.84rem;text-align:left">
+            <span style="font-size:1.2rem">📥</span>
+            <div><div style="font-weight:600">Descargar mis datos</div><div style="font-size:0.74rem;color:var(--muted)">Exportar toda mi información en formato JSON</div></div>
+          </button>
+          <button onclick="if(confirm('¿Limpiar el historial de tu bitácora? No se puede deshacer.')) { localStorage.removeItem(\'atenea_bitacora\'); alert(\'Bitácora eliminada.\'); closeProfileModal(); }"
+            style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;border:1.5px solid #f5c6cb;background:#fff5f5;cursor:pointer;font-family:inherit;font-size:0.84rem;text-align:left;color:var(--danger)">
+            <span style="font-size:1.2rem">🗑️</span>
+            <div><div style="font-weight:600">Borrar mi bitácora</div><div style="font-size:0.74rem;color:#c0392b">Elimina todas tus entradas del diario reflexivo</div></div>
+          </button>
+        </div>
+
+      </div>
+      <!-- /ptab-privacidad -->
+
+    </div>
+    <!-- /profile-body -->
+
+    <!-- Footer con acciones -->
+    <div class="profile-modal-footer">
+      <button class="pbtn pbtn-cancel" onclick="closeProfileModal()">Cancelar</button>
+      <button class="pbtn pbtn-danger" onclick="cerrarSesion()">🚪 Cerrar sesión</button>
+      <button class="pbtn pbtn-save"   onclick="saveProfile()">💾 Guardar cambios</button>
+    </div>
+
+  </div>
+</div>
+<!-- /modal perfil -->
+
 </body>
 </html>
