@@ -361,6 +361,7 @@
     <button class="tab-btn active" onclick="showTab('dashboard',this)">🏠 Mi Dashboard</button>
     <button class="tab-btn" onclick="showTab('aprendizaje',this)">🎨 Estilo de Aprendizaje</button>
     <button class="tab-btn" onclick="showTab('screening',this)">🧩 Diversidad Cognitiva</button>
+    <button class="tab-btn" onclick="showTab('bitacora',this)">📓 Mi Bitácora</button>
     <button class="tab-btn" onclick="showTab('historial',this)">📈 Mi Historial</button>
     <button class="tab-btn" onclick="showTab('recursos',this)">🎯 Recursos UAQ</button>
   </div>
@@ -674,6 +675,133 @@
 <!-- ══════════════════════════════════
      MODAL — INSTRUMENTO
 ══════════════════════════════════ -->
+<!-- ══════════════════════════════════
+     TAB — BITÁCORA REFLEXIVA
+══════════════════════════════════ -->
+<div id="tab-bitacora" class="tab-panel">
+
+  <!-- Aviso ético -->
+  <div style="background:linear-gradient(135deg,#eaf6fb,#f0faf5);border:1.5px solid #aed6f1;border-radius:14px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px">
+    <span style="font-size:1.6rem">🔒</span>
+    <div style="font-size:0.82rem;color:#1a5276;line-height:1.6">
+      <strong>Tu espacio privado.</strong> Lo que escribas aquí es confidencial y solo lo verás tú.
+      Atenea AI usa tus reflexiones de manera agregada y anónima para personalizar tus recomendaciones de aprendizaje.
+      Nunca se comparte con docentes sin tu consentimiento explícito.
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start">
+
+    <!-- ── COLUMNA IZQUIERDA: nueva entrada ── -->
+    <div>
+
+      <!-- Check-in emocional -->
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-title"><span class="card-title-icon">💭</span>¿Cómo te sientes hoy?</div>
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:14px">Elige la emoción que más se acerca a tu estado en este momento:</p>
+        <div id="emojiPicker" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+          <!-- Generado por JS -->
+        </div>
+        <div style="margin-top:4px">
+          <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:8px">
+            Intensidad: <span id="intensityLabel" style="color:var(--accent)">Moderada (3)</span>
+          </label>
+          <input type="range" id="intensitySlider" min="1" max="5" value="3"
+            oninput="updateIntensityLabel(this.value)"
+            style="width:100%;accent-color:var(--accent)">
+          <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--muted);margin-top:4px">
+            <span>Muy leve</span><span>Leve</span><span>Moderada</span><span>Intensa</span><span>Muy intensa</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Editor de entrada -->
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-title"><span class="card-title-icon">✍️</span>Mi Reflexión de Hoy</div>
+
+        <!-- Prompt rotativo -->
+        <div id="promptSugerido" style="background:#f8f9fa;border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:10px 14px;font-size:0.82rem;color:var(--text);margin-bottom:12px;cursor:pointer" title="Clic para cambiar pregunta">
+          <!-- Generado por JS -->
+        </div>
+
+        <textarea id="entradaTexto"
+          placeholder="Escribe libremente sobre lo que piensas, sientes o viviste hoy en tu semestre. No hay respuestas correctas — este es tu espacio..."
+          style="width:100%;min-height:140px;padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);font-family:inherit;font-size:0.85rem;resize:vertical;line-height:1.6;color:var(--text)"
+          oninput="updateWordCount(this)"></textarea>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+          <span id="wordCount" style="font-size:0.74rem;color:var(--muted)">0 palabras</span>
+          <span style="font-size:0.74rem;color:var(--muted)">Sugerido: 50-200 palabras</span>
+        </div>
+
+        <!-- Metadatos de la entrada -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">
+          <div>
+            <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:5px">📚 Materia relacionada</label>
+            <select id="materiaSelect" style="width:100%;padding:8px 10px;border-radius:9px;border:1.5px solid var(--border);font-family:inherit;font-size:0.82rem;background:white">
+              <option value="">— Sin materia específica —</option>
+              <option value="Seminario de Investigación I">Seminario de Investigación I</option>
+              <option value="Tecnología Educativa Avanzada">Tecnología Educativa Avanzada</option>
+              <option value="Metodología de la Investigación">Metodología de la Investigación</option>
+              <option value="Estadística Aplicada">Estadística Aplicada</option>
+              <option value="Diseño Instruccional">Diseño Instruccional</option>
+              <option value="Práctica Profesional">Práctica Profesional</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:5px">🏷️ Tipo de entrada</label>
+            <select id="tipoSelect" style="width:100%;padding:8px 10px;border-radius:9px;border:1.5px solid var(--border);font-family:inherit;font-size:0.82rem;background:white">
+              <option value="reflexion">💭 Reflexión libre</option>
+              <option value="logro">⭐ Logro / éxito</option>
+              <option value="dificultad">⚠️ Dificultad / obstáculo</option>
+              <option value="preocupacion">😰 Preocupación</option>
+              <option value="motivacion">🔥 Motivación / inspiración</option>
+              <option value="relaciones">🤝 Relaciones / trabajo en equipo</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tags rápidos -->
+        <div style="margin-top:14px">
+          <label style="font-size:0.78rem;font-weight:600;display:block;margin-bottom:7px">🔖 Etiquetas rápidas (puedes seleccionar varias)</label>
+          <div id="tagPicker" style="display:flex;flex-wrap:wrap;gap:7px"></div>
+        </div>
+
+        <button id="guardarEntradaBtn" onclick="guardarEntrada()"
+          style="margin-top:16px;width:100%;padding:12px;background:linear-gradient(135deg,var(--teal),var(--accent));color:white;border:none;border-radius:11px;font-weight:700;font-size:0.92rem;cursor:pointer;transition:opacity 0.2s">
+          💾 Guardar en mi Bitácora
+        </button>
+      </div>
+    </div>
+
+    <!-- ── COLUMNA DERECHA: historial + insight ── -->
+    <div style="display:flex;flex-direction:column;gap:18px">
+
+      <!-- Insight automático -->
+      <div class="card" id="insightCard" style="border-left:4px solid var(--violet)">
+        <div class="card-title"><span class="card-title-icon">🤖</span>Atenea detecta…</div>
+        <div id="insightTexto" style="font-size:0.83rem;line-height:1.6;color:var(--text)"></div>
+      </div>
+
+      <!-- Mini chart emocional -->
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">📊</span>Tus emociones — últimos 14 días</div>
+        <div style="height:140px;position:relative"><canvas id="emoTrendChart"></canvas></div>
+      </div>
+
+      <!-- Historial de entradas -->
+      <div class="card" style="max-height:520px;overflow-y:auto">
+        <div class="card-title" style="justify-content:space-between">
+          <span><span class="card-title-icon">📋</span>Entradas anteriores</span>
+          <span id="entryCount" style="font-size:0.76rem;font-weight:600;background:#eaf3fb;color:var(--accent);padding:2px 9px;border-radius:10px"></span>
+        </div>
+        <div id="entradasLista" style="display:flex;flex-direction:column;gap:10px"></div>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+</div><!-- /tab-bitacora -->
+
+
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
   <div class="modal">
     <h3>📝 Aplicación Rápida del Instrumento</h3>
@@ -995,6 +1123,7 @@ function showTab(id, btn) {
     if (id === 'dashboard')    renderRadarChart();
     if (id === 'aprendizaje')  renderEstilosChart();
     if (id === 'historial')    renderHistorialChart();
+    if (id === 'bitacora')     initBitacora();
   }, 50);
 }
 
@@ -1077,6 +1206,390 @@ function submitInstrument() {
   renderDimList();
   setTimeout(renderRadarChart, 100);
   alert('✅ ¡Respuestas guardadas! Tu perfil ha sido actualizado con las nuevas puntuaciones.');
+}
+
+// ═══════════════════════════════════════════════════════════
+// BITÁCORA REFLEXIVA — Motor completo
+// ═══════════════════════════════════════════════════════════
+
+const EMOCIONES = [
+  { id:'tranquilo',   emoji:'😌', label:'Tranquilo',    color:'#1abc9c', valence: 1 },
+  { id:'motivado',    emoji:'🔥', label:'Motivado',     color:'#e67e22', valence: 1 },
+  { id:'contento',    emoji:'😊', label:'Contento',     color:'#27ae60', valence: 1 },
+  { id:'curioso',     emoji:'🤔', label:'Curioso',      color:'#3498db', valence: 1 },
+  { id:'cansado',     emoji:'😴', label:'Cansado',      color:'#7f8c8d', valence:-1 },
+  { id:'estresado',   emoji:'😰', label:'Estresado',    color:'#e74c3c', valence:-1 },
+  { id:'frustrado',   emoji:'😤', label:'Frustrado',    color:'#c0392b', valence:-1 },
+  { id:'confundido',  emoji:'😵', label:'Confundido',   color:'#8e44ad', valence:-1 },
+  { id:'triste',      emoji:'😔', label:'Triste',       color:'#2c3e50', valence:-1 },
+  { id:'orgulloso',   emoji:'💪', label:'Orgulloso',    color:'#16a085', valence: 1 },
+];
+
+const TAGS_RAPIDOS = [
+  '📝 Parcial/Examen', '📚 Tarea', '👥 Equipo', '🗣️ Exposición',
+  '📖 Lectura', '💻 Proyecto', '🎓 Asesoría', '🏠 Personal',
+  '💰 Economía', '🌡️ Salud', '⏰ Tiempo', '🌟 Logro',
+];
+
+const PROMPTS = [
+  '💡 ¿Qué fue lo más difícil de hoy en tus materias?',
+  '🌟 ¿Hubo algo que te salió mejor de lo esperado esta semana?',
+  '🤔 ¿Hay algún tema de clase que todavía no te queda claro?',
+  '💪 ¿Qué estrategia usaste cuando te atascaste en algo?',
+  '🤝 ¿Cómo fue la dinámica con tus compañeros hoy?',
+  '🎯 ¿Qué quieres lograr en las próximas dos semanas?',
+  '😴 ¿Cómo ha estado tu energía y concentración esta semana?',
+  '📚 ¿Qué materia te está pesando más y por qué?',
+  '🏛️ ¿Te sientes parte del ambiente de tu programa? ¿Por qué?',
+  '💭 ¿Qué te diría tu yo del futuro sobre cómo estás llevando el semestre?',
+];
+
+const INTENSIDAD_LABELS = ['', 'Muy leve', 'Leve', 'Moderada', 'Intensa', 'Muy intensa'];
+
+// Datos demo para que el historial no aparezca vacío la primera vez
+const ENTRADAS_DEMO = [
+  {
+    id: 'demo-1', fecha: '2026-06-08', emocion: 'estresado', intensidad: 4,
+    materia: 'Seminario de Investigación I', tipo: 'dificultad',
+    tags: ['📝 Parcial/Examen', '⏰ Tiempo'],
+    texto: 'Esta semana se me acumularon los avances del seminario. Siento que no me alcanza el tiempo para profundizar en los análisis como quisiera. Revisé el feedback del asesor y hay varias correcciones importantes que no había notado. Me cuesta mantener la concentración por las tardes.'
+  },
+  {
+    id: 'demo-2', fecha: '2026-06-05', emocion: 'motivado', intensidad: 4,
+    materia: 'Tecnología Educativa Avanzada', tipo: 'logro',
+    tags: ['🌟 Logro', '👥 Equipo'],
+    texto: 'Presentamos el prototipo de Atenea AI en clase y la retroalimentación fue muy positiva. El Dr. Ramírez dijo que el sistema tiene potencial real para el doctorado. Me llenó de energía para seguir. El trabajo en equipo fluyó muy bien esta vez, algo poco usual.'
+  },
+  {
+    id: 'demo-3', fecha: '2026-06-01', emocion: 'confundido', intensidad: 3,
+    materia: 'Estadística Aplicada', tipo: 'dificultad',
+    tags: ['📝 Parcial/Examen', '📚 Tarea'],
+    texto: 'Los modelos de regresión múltiple con variables latentes siguen sin quedarme del todo claros. Siento que entiendo el concepto pero cuando toco los datos en R me pierdo. Voy a buscar tutoriales esta noche. No me gusta quedarme con dudas porque se acumulan.'
+  },
+];
+
+let emocionSeleccionada = null;
+let tagsSeleccionados = new Set();
+let promptIndex = 0;
+let emoTrendChartInst = null;
+
+function cargarEntradas() {
+  try {
+    const raw = localStorage.getItem('atenea_bitacora');
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  // Primera vez: cargar demo
+  localStorage.setItem('atenea_bitacora', JSON.stringify(ENTRADAS_DEMO));
+  return ENTRADAS_DEMO;
+}
+
+function guardarEntradasLS(entradas) {
+  localStorage.setItem('atenea_bitacora', JSON.stringify(entradas));
+}
+
+function initBitacora() {
+  renderEmojiPicker();
+  renderTagPicker();
+  renderPrompt();
+  renderEntradasLista();
+  renderInsight();
+  renderEmoTrendChart();
+}
+
+function renderEmojiPicker() {
+  document.getElementById('emojiPicker').innerHTML = EMOCIONES.map(e =>
+    `<button class="emoji-chip" id="chip-${e.id}" onclick="selectEmocion('${e.id}')"
+      style="display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border-radius:20px;
+             border:2px solid ${e.color}33;background:${e.color}11;cursor:pointer;font-size:0.82rem;
+             font-weight:600;color:${e.color};transition:all 0.18s">
+      <span style="font-size:1.15rem">${e.emoji}</span>${e.label}
+    </button>`
+  ).join('');
+}
+
+function selectEmocion(id) {
+  emocionSeleccionada = id;
+  EMOCIONES.forEach(e => {
+    const chip = document.getElementById('chip-' + e.id);
+    if (!chip) return;
+    if (e.id === id) {
+      chip.style.background = e.color + '25';
+      chip.style.borderColor = e.color;
+      chip.style.transform = 'scale(1.07)';
+      chip.style.boxShadow = `0 2px 8px ${e.color}44`;
+    } else {
+      chip.style.background = e.color + '11';
+      chip.style.borderColor = e.color + '33';
+      chip.style.transform = 'scale(1)';
+      chip.style.boxShadow = 'none';
+    }
+  });
+}
+
+function updateIntensityLabel(v) {
+  document.getElementById('intensityLabel').textContent = `${INTENSIDAD_LABELS[v]} (${v})`;
+}
+
+function renderTagPicker() {
+  document.getElementById('tagPicker').innerHTML = TAGS_RAPIDOS.map(tag =>
+    `<button class="tag-chip" onclick="toggleTag(this, '${tag}')"
+      style="padding:5px 12px;border-radius:14px;border:1.5px solid var(--border);background:white;
+             font-size:0.78rem;cursor:pointer;color:var(--muted);font-family:inherit;transition:all 0.15s">
+      ${tag}
+    </button>`
+  ).join('');
+}
+
+function toggleTag(btn, tag) {
+  if (tagsSeleccionados.has(tag)) {
+    tagsSeleccionados.delete(tag);
+    btn.style.background = 'white';
+    btn.style.borderColor = 'var(--border)';
+    btn.style.color = 'var(--muted)';
+  } else {
+    tagsSeleccionados.add(tag);
+    btn.style.background = '#eaf3fb';
+    btn.style.borderColor = 'var(--accent)';
+    btn.style.color = 'var(--accent)';
+    btn.style.fontWeight = '600';
+  }
+}
+
+function renderPrompt() {
+  const p = PROMPTS[promptIndex % PROMPTS.length];
+  const el = document.getElementById('promptSugerido');
+  if (el) {
+    el.innerHTML = `<em style="color:var(--muted);font-size:0.76rem">Sugerencia (clic para cambiar):</em><br>${p}`;
+    el.onclick = () => { promptIndex++; renderPrompt(); };
+  }
+}
+
+function updateWordCount(ta) {
+  const words = ta.value.trim().split(/\s+/).filter(w => w.length > 0).length;
+  document.getElementById('wordCount').textContent = `${words} ${words === 1 ? 'palabra' : 'palabras'}`;
+}
+
+function guardarEntrada() {
+  const texto = document.getElementById('entradaTexto').value.trim();
+  if (!texto) {
+    alert('✏️ Escribe algo antes de guardar tu entrada.');
+    document.getElementById('entradaTexto').focus();
+    return;
+  }
+  if (!emocionSeleccionada) {
+    alert('💭 Selecciona cómo te sientes hoy antes de guardar.');
+    return;
+  }
+
+  const entrada = {
+    id: 'entry-' + Date.now(),
+    fecha: new Date().toISOString().slice(0, 10),
+    emocion: emocionSeleccionada,
+    intensidad: parseInt(document.getElementById('intensitySlider').value),
+    materia: document.getElementById('materiaSelect').value,
+    tipo: document.getElementById('tipoSelect').value,
+    tags: Array.from(tagsSeleccionados),
+    texto,
+  };
+
+  const entradas = cargarEntradas();
+  entradas.unshift(entrada);
+  guardarEntradasLS(entradas);
+
+  // Reset form
+  document.getElementById('entradaTexto').value = '';
+  document.getElementById('wordCount').textContent = '0 palabras';
+  document.getElementById('materiaSelect').value = '';
+  document.getElementById('tipoSelect').value = 'reflexion';
+  tagsSeleccionados.clear();
+  renderTagPicker();
+  emocionSeleccionada = null;
+  renderEmojiPicker();
+  document.getElementById('intensitySlider').value = 3;
+  updateIntensityLabel(3);
+  promptIndex++;
+  renderPrompt();
+
+  // Refresh panel
+  renderEntradasLista();
+  renderInsight();
+  renderEmoTrendChart();
+
+  // Feedback visual
+  const btn = document.getElementById('guardarEntradaBtn');
+  btn.textContent = '✅ ¡Guardado en tu bitácora!';
+  btn.style.background = 'var(--success)';
+  setTimeout(() => {
+    btn.textContent = '💾 Guardar en mi Bitácora';
+    btn.style.background = '';
+  }, 2500);
+}
+
+function renderEntradasLista() {
+  const entradas = cargarEntradas();
+  const el = document.getElementById('entradasLista');
+  const countEl = document.getElementById('entryCount');
+  if (countEl) countEl.textContent = `${entradas.length} entrada${entradas.length !== 1 ? 's' : ''}`;
+  if (!el) return;
+  if (entradas.length === 0) {
+    el.innerHTML = '<p style="font-size:0.82rem;color:var(--muted);text-align:center;padding:20px 0">Tu bitácora está vacía. ¡Escribe tu primera reflexión!</p>';
+    return;
+  }
+  el.innerHTML = entradas.map(e => {
+    const emo = EMOCIONES.find(x => x.id === e.emocion) || EMOCIONES[0];
+    const fecha = new Date(e.fecha + 'T12:00:00').toLocaleDateString('es-MX', { day:'numeric', month:'short', year:'numeric' });
+    const tipoIconos = { reflexion:'💭', logro:'⭐', dificultad:'⚠️', preocupacion:'😰', motivacion:'🔥', relaciones:'🤝' };
+    const icono = tipoIconos[e.tipo] || '💭';
+    const preview = e.texto.length > 100 ? e.texto.slice(0, 100) + '…' : e.texto;
+    const tagsHTML = (e.tags||[]).slice(0,3).map(t =>
+      `<span style="font-size:0.7rem;background:#f0f4f8;border-radius:8px;padding:1px 6px;color:var(--muted)">${t}</span>`
+    ).join(' ');
+    return `<div style="border:1.5px solid ${emo.color}33;border-left:4px solid ${emo.color};border-radius:10px;padding:12px 14px;background:${emo.color}08;cursor:pointer"
+      onclick="toggleEntradaDetalle(this)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-size:1.2rem">${emo.emoji}</span>
+        <span style="font-size:0.78rem;font-weight:700;color:${emo.color}">${emo.label}</span>
+        <span style="font-size:0.72rem;font-weight:600;background:${emo.color}22;color:${emo.color};border-radius:8px;padding:1px 7px">Int. ${e.intensidad}/5</span>
+        <span style="font-size:1rem;margin-left:2px">${icono}</span>
+        <span style="font-size:0.72rem;color:var(--muted);margin-left:auto">${fecha}</span>
+      </div>
+      ${e.materia ? `<div style="font-size:0.74rem;color:var(--accent);font-weight:600;margin-bottom:4px">📚 ${e.materia}</div>` : ''}
+      <div class="entrada-preview" style="font-size:0.8rem;line-height:1.5;color:var(--text)">${preview}</div>
+      <div class="entrada-full" style="display:none;font-size:0.8rem;line-height:1.6;color:var(--text);margin-top:4px">${e.texto}</div>
+      <div style="margin-top:7px;display:flex;gap:5px;flex-wrap:wrap">${tagsHTML}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleEntradaDetalle(el) {
+  const preview = el.querySelector('.entrada-preview');
+  const full    = el.querySelector('.entrada-full');
+  if (full.style.display === 'none') {
+    preview.style.display = 'none';
+    full.style.display = 'block';
+  } else {
+    preview.style.display = 'block';
+    full.style.display = 'none';
+  }
+}
+
+function renderInsight() {
+  const entradas = cargarEntradas();
+  const el = document.getElementById('insightTexto');
+  if (!el || entradas.length === 0) {
+    if (el) el.innerHTML = '<em style="color:var(--muted)">Escribe tus primeras reflexiones y Atenea empezará a detectar patrones en tus emociones y materias.</em>';
+    return;
+  }
+
+  // Calcular emoción más frecuente
+  const freq = {};
+  entradas.forEach(e => { freq[e.emocion] = (freq[e.emocion]||0) + 1; });
+  const topEmo = Object.entries(freq).sort((a,b) => b[1]-a[1])[0];
+  const emoData = EMOCIONES.find(x => x.id === topEmo[0]);
+
+  // Materia que más aparece
+  const materiaFreq = {};
+  entradas.filter(e => e.materia).forEach(e => { materiaFreq[e.materia] = (materiaFreq[e.materia]||0) + 1; });
+  const topMateria = Object.entries(materiaFreq).sort((a,b) => b[1]-a[1])[0];
+
+  // Tendencia: últimas 3 vs anteriores
+  const ultimas3   = entradas.slice(0, 3);
+  const anteriores = entradas.slice(3, 6);
+  const avgVal = arr => arr.length === 0 ? 0 : arr.reduce((s, e) => {
+    const em = EMOCIONES.find(x => x.id === e.emocion);
+    return s + (em ? em.valence * e.intensidad : 0);
+  }, 0) / arr.length;
+  const reciente  = avgVal(ultimas3);
+  const anterior  = avgVal(anteriores);
+  const tendencia = reciente > anterior + 0.3 ? '📈 mejorando' : reciente < anterior - 0.3 ? '📉 bajando' : '→ estable';
+
+  // Tipos frecuentes
+  const tiposFreq = {};
+  entradas.forEach(e => { tiposFreq[e.tipo] = (tiposFreq[e.tipo]||0) + 1; });
+  const topTipo = Object.entries(tiposFreq).sort((a,b) => b[1]-a[1])[0];
+  const tipoLabels = { reflexion:'reflexiones libres', logro:'logros', dificultad:'dificultades', preocupacion:'preocupaciones', motivacion:'momentos de motivación', relaciones:'vivencias sociales' };
+
+  let html = `<p style="margin-bottom:10px">En tus últimas <strong>${entradas.length}</strong> entradas Atenea detecta:</p>
+  <ul style="margin:0 0 10px 18px;line-height:1.8;font-size:0.82rem">
+    <li>Tu estado emocional más frecuente es <strong style="color:${emoData?.color}">${emoData?.emoji} ${emoData?.label}</strong> (${topEmo[1]} veces)</li>
+    ${topMateria ? `<li>La materia que más aparece en tus reflexiones: <strong style="color:var(--accent)">${topMateria[0]}</strong></li>` : ''}
+    <li>Tu bienestar reciente está <strong>${tendencia}</strong> respecto a semanas anteriores</li>
+    <li>Escribes principalmente sobre <strong>${tipoLabels[topTipo?.[0]] || 'reflexiones'}</strong></li>
+  </ul>`;
+
+  // Recomendación personalizada
+  if (emoData?.valence === -1 && topMateria) {
+    html += `<div style="background:#fef9e7;border:1px solid #f9e79f;border-radius:8px;padding:9px 12px;font-size:0.8rem;color:#7d6608">
+      <strong>💡 Sugerencia Atenea:</strong> Parece que <em>${topMateria[0]}</em> te genera ${emoData.label.toLowerCase()}.
+      Revisa la sección <em>Recursos UAQ</em> para estrategias de estudio adaptadas a tu perfil ${PERFIL.estilo?.tipo || 'Social-Colaborativo'}.
+    </div>`;
+  } else if (emoData?.valence === 1) {
+    html += `<div style="background:#d4f4e2;border:1px solid #a9dfbf;border-radius:8px;padding:9px 12px;font-size:0.8rem;color:#1e8449">
+      <strong>🌟 Atenea nota:</strong> Tu tono emocional reciente es positivo. ¡Es un buen momento para avanzar en temas pendientes!
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+function renderEmoTrendChart() {
+  const entradas = cargarEntradas();
+  // Últimos 14 días
+  const days = 14;
+  const today = new Date();
+  const labels = [];
+  const data = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    labels.push(i === 0 ? 'Hoy' : d.toLocaleDateString('es-MX', { day:'numeric', month:'short' }));
+    const dayEntries = entradas.filter(e => e.fecha === key);
+    if (dayEntries.length > 0) {
+      const avg = dayEntries.reduce((s, e) => {
+        const em = EMOCIONES.find(x => x.id === e.emocion);
+        // Escala 1-5: positivo → 3-5, negativo → 1-3
+        return s + (em ? (em.valence === 1 ? 2 + e.intensidad * 0.6 : 3 - e.intensidad * 0.4) : 3);
+      }, 0) / dayEntries.length;
+      data.push(parseFloat(avg.toFixed(2)));
+    } else {
+      data.push(null);
+    }
+  }
+
+  const ctx = document.getElementById('emoTrendChart');
+  if (!ctx) return;
+
+  if (emoTrendChartInst) { emoTrendChartInst.destroy(); emoTrendChartInst = null; }
+
+  emoTrendChartInst = new Chart(ctx.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Bienestar emocional', data,
+        borderColor: '#27ae60', backgroundColor: 'rgba(39,174,96,0.12)',
+        borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: data.map(v =>
+          v === null ? 'transparent' : v >= 4 ? '#27ae60' : v >= 3 ? '#e67e22' : '#e74c3c'
+        ),
+        tension: 0.4, fill: true, spanGaps: true,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: { label: ctx => {
+          const v = ctx.raw;
+          if (v === null) return 'Sin entrada';
+          return v >= 4.2 ? '😊 Bienestar alto' : v >= 3.3 ? '😌 Bienestar moderado' : '😔 Bienestar bajo';
+        }}
+      }},
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 8 }, maxRotation: 45 } },
+        y: { min: 1, max: 5, display: false }
+      }
+    }
+  });
 }
 
 // ═══════════════════════════════════════════════════════════
