@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Portal Atenea — Seguimiento Emocional y Académico | UAQ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary:   #1a3a5c;
+    --accent:    #2980b9;
+    --teal:      #16a085;
+    --violet:    #8e44ad;
+    --success:   #27ae60;
+    --warning:   #e67e22;
+    --danger:    #c0392b;
+    --bg:        #f0f4f8;
+    --card:      #ffffff;
+    --text:      #2c3e50;
+    --muted:     #7f8c8d;
+    --border:    #dce1e7;
+    --shadow:    0 2px 14px rgba(0,0,0,0.08);
+    --shadow-lg: 0 6px 30px rgba(0,0,0,0.12);
+    /* Dimensiones */
+    --d1: #e74c3c; --d2: #3498db; --d3: #f39c12;
+    --d4: #27ae60; --d5: #9b59b6; --d6: #1abc9c;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ═══ HEADER ═══ */
+  header {
+    background: linear-gradient(135deg, #1a3a5c 0%, #2c6fad 60%, #16a085 100%);
+    color: white; padding: 0;
+  }
+  .header-inner {
+    max-width: 1200px; margin: 0 auto; padding: 18px 28px;
+    display: flex; align-items: center; gap: 18px;
+  }
+  .logo-owl {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(255,255,255,0.18); display: flex; align-items: center;
+    justify-content: center; font-size: 26px; flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.2);
+  }
+  .header-text h1 { font-size: 1.3rem; font-weight: 700; }
+  .header-text p  { font-size: 0.8rem; opacity: 0.8; margin-top: 2px; }
+  .header-student {
+    margin-left: auto; display: flex; align-items: center; gap: 14px;
+  }
+  .student-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: rgba(255,255,255,0.25); display: flex; align-items: center;
+    justify-content: center; font-size: 17px; border: 2px solid rgba(255,255,255,0.4);
+  }
+  .student-name { font-size: 0.88rem; font-weight: 600; }
+  .student-info { font-size: 0.76rem; opacity: 0.75; }
+  .notification-btn {
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center;
+    justify-content: center; cursor: pointer; font-size: 16px; position: relative;
+    transition: background 0.2s;
+  }
+  .notification-btn:hover { background: rgba(255,255,255,0.25); }
+  .notif-dot { position: absolute; top: 5px; right: 5px; width: 8px; height: 8px;
+    border-radius: 50%; background: #e74c3c; border: 1.5px solid rgba(255,255,255,0.7); }
+
+  /* ═══ NAV ═══ */
+  nav { background: var(--primary); border-bottom: 3px solid var(--accent); }
+  .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 28px; display: flex; gap: 2px; }
+  .tab-btn {
+    background: none; border: none; color: rgba(255,255,255,0.6);
+    padding: 12px 20px; cursor: pointer; font-size: 0.88rem;
+    border-bottom: 3px solid transparent; margin-bottom: -3px;
+    transition: all 0.2s; display: flex; align-items: center; gap: 7px; white-space: nowrap;
+  }
+  .tab-btn:hover { color: white; }
+  .tab-btn.active { color: white; border-bottom-color: #2ecc71; font-weight: 600; }
+
+  /* ═══ MAIN LAYOUT ═══ */
+  main { max-width: 1200px; margin: 0 auto; padding: 24px 28px 40px; }
+
+  /* ═══ BIENVENIDA ═══ */
+  .welcome-banner {
+    background: linear-gradient(135deg, #16a085, #2980b9);
+    border-radius: 16px; padding: 22px 28px; margin-bottom: 24px;
+    color: white; display: flex; align-items: center; gap: 20px;
+    box-shadow: var(--shadow-lg);
+  }
+  .welcome-icon { font-size: 42px; }
+  .welcome-text h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 4px; }
+  .welcome-text p  { font-size: 0.88rem; opacity: 0.9; line-height: 1.5; }
+  .welcome-actions { margin-left: auto; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+  .btn-primary {
+    background: rgba(255,255,255,0.95); color: var(--primary);
+    border: none; border-radius: 10px; padding: 10px 20px;
+    font-weight: 700; font-size: 0.88rem; cursor: pointer;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .btn-primary:hover { background: white; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .btn-secondary {
+    background: rgba(255,255,255,0.15); color: white;
+    border: 1px solid rgba(255,255,255,0.35); border-radius: 10px;
+    padding: 8px 18px; font-size: 0.83rem; cursor: pointer;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .btn-secondary:hover { background: rgba(255,255,255,0.25); }
+
+  /* ═══ GRID ═══ */
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 22px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
+  .grid-radar { display: grid; grid-template-columns: 380px 1fr; gap: 18px; margin-bottom: 22px; }
+  .col-span-2 { grid-column: span 2; }
+  .col-span-3 { grid-column: span 3; }
+
+  /* ═══ CARDS ═══ */
+  .card {
+    background: var(--card); border-radius: 14px; padding: 22px 24px;
+    box-shadow: var(--shadow); border: 1px solid var(--border);
+  }
+  .card-title {
+    font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title-icon { font-size: 1.1rem; }
+
+  /* ═══ KPI CARDS ═══ */
+  .kpi-value { font-size: 2.4rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .kpi-label { font-size: 0.82rem; color: var(--muted); line-height: 1.4; }
+  .kpi-sub   { font-size: 0.76rem; color: var(--muted); margin-top: 8px; }
+  .kpi-trend { display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem;
+    font-weight: 600; padding: 3px 8px; border-radius: 20px; margin-top: 8px; }
+  .trend-up   { background: #d4f4e2; color: #1e8449; }
+  .trend-down { background: #fdecea; color: #c0392b; }
+  .trend-flat { background: #fef9e7; color: #d68910; }
+
+  /* ═══ RIESGO ═══ */
+  .risk-gauge {
+    display: flex; flex-direction: column; align-items: center; padding: 8px 0;
+  }
+  .risk-arc-wrap { position: relative; width: 160px; height: 90px; overflow: hidden; margin-bottom: 10px; }
+  .risk-arc {
+    width: 160px; height: 160px; border-radius: 50%;
+    border: 16px solid #eee; border-bottom-color: transparent;
+    border-right-color: transparent; transform: rotate(135deg);
+    position: absolute; top: 0; left: 0;
+  }
+  .risk-arc-fill {
+    position: absolute; top: 0; left: 0;
+    width: 160px; height: 160px; border-radius: 50%;
+    border: 16px solid transparent; border-bottom-color: transparent;
+    border-right-color: transparent; transform-origin: center center;
+  }
+  .risk-score {
+    font-size: 2rem; font-weight: 900; text-align: center; line-height: 1;
+  }
+  .risk-label {
+    font-size: 0.82rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; text-align: center; margin-top: 4px;
+  }
+  .risk-bajo  { color: var(--success); }
+  .risk-medio { color: var(--warning); }
+  .risk-alto  { color: var(--danger);  }
+
+  /* ═══ DIMENSIONES BAR ═══ */
+  .dim-list { display: flex; flex-direction: column; gap: 12px; }
+  .dim-row { display: flex; align-items: center; gap: 10px; }
+  .dim-icon { font-size: 1rem; width: 24px; text-align: center; flex-shrink: 0; }
+  .dim-name { font-size: 0.8rem; width: 160px; flex-shrink: 0; }
+  .dim-bar-wrap { flex: 1; background: #f0f4f8; border-radius: 6px; height: 10px; overflow: hidden; }
+  .dim-bar { height: 100%; border-radius: 6px; transition: width 1s ease; }
+  .dim-score { font-size: 0.82rem; font-weight: 700; width: 28px; text-align: right; flex-shrink: 0; }
+  .dim-delta { font-size: 0.72rem; width: 34px; text-align: right; flex-shrink: 0; }
+  .delta-up   { color: var(--success); }
+  .delta-down { color: var(--danger); }
+  .delta-flat { color: var(--muted); }
+
+  /* ═══ RADAR CHART ═══ */
+  .radar-wrap { position: relative; height: 290px; }
+
+  /* ═══ TIMELINE CHART ═══ */
+  .timeline-wrap { position: relative; height: 200px; }
+
+  /* ═══ ESTILO APRENDIZAJE ═══ */
+  .estilo-badge {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, #8e44ad22, #8e44ad11);
+    border: 2px solid #8e44ad33; border-radius: 12px;
+    padding: 10px 16px; margin-bottom: 14px;
+  }
+  .estilo-icon { font-size: 1.8rem; }
+  .estilo-name { font-size: 1rem; font-weight: 700; color: var(--violet); }
+  .estilo-sub  { font-size: 0.78rem; color: var(--muted); }
+
+  .estilo-bars { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .estilo-bar-row { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
+  .estilo-bar-label { width: 110px; flex-shrink: 0; }
+  .estilo-bar-wrap { flex: 1; background: #f0f4f8; border-radius: 5px; height: 8px; overflow: hidden; }
+  .estilo-bar-fill { height: 100%; border-radius: 5px; transition: width 1.2s ease; }
+  .estilo-bar-val { width: 32px; text-align: right; font-weight: 700; color: var(--muted); }
+
+  .estrategias-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .estrategias-list li {
+    background: #f8f9fa; border-radius: 8px; padding: 10px 14px;
+    font-size: 0.83rem; line-height: 1.5; border-left: 3px solid var(--violet);
+    display: flex; gap: 8px; align-items: flex-start;
+  }
+  .estrategias-list li::before { content: "→"; color: var(--violet); font-weight: 700; flex-shrink: 0; }
+
+  /* ═══ SCREENING ═══ */
+  .aviso-nd {
+    background: #fff8e1; border: 1px solid #f9a825; border-radius: 10px;
+    padding: 12px 16px; margin-bottom: 16px; font-size: 0.8rem;
+    color: #5d4037; line-height: 1.5;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .aviso-nd-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+  .nd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .nd-card {
+    border-radius: 10px; padding: 14px 16px;
+    border: 1.5px solid var(--border);
+  }
+  .nd-card.nivel-bajo   { border-color: #a9dfbf; background: #f0faf4; }
+  .nd-card.nivel-medio  { border-color: #f9e79f; background: #fefdf0; }
+  .nd-card.nivel-alto   { border-color: #f5b7b1; background: #fdf5f4; }
+  .nd-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .nd-icon  { font-size: 1.2rem; }
+  .nd-name  { font-size: 0.85rem; font-weight: 700; flex: 1; }
+  .nd-nivel-badge {
+    font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .badge-bajo  { background: #d4efdf; color: #1e8449; }
+  .badge-medio { background: #fef9e7; color: #d68910; }
+  .badge-alto  { background: #fdecea; color: #c0392b; }
+  .nd-score-bar { background: #e8e8e8; border-radius: 4px; height: 6px; overflow: hidden; margin-bottom: 8px; }
+  .nd-score-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+  .nd-desc { font-size: 0.77rem; color: var(--muted); line-height: 1.5; }
+
+  .nd-derivacion {
+    background: #e8f4fd; border: 1px solid #aed6f1; border-radius: 10px;
+    padding: 14px 16px; margin-top: 14px; display: flex; gap: 12px; align-items: flex-start;
+  }
+  .nd-derivacion-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .nd-derivacion h4 { font-size: 0.88rem; font-weight: 700; color: #1a5276; margin-bottom: 4px; }
+  .nd-derivacion p  { font-size: 0.8rem; color: #2c3e50; line-height: 1.5; }
+  .nd-derivacion a  { color: #2980b9; font-weight: 600; }
+
+  /* ═══ HISTORIAL ═══ */
+  .historial-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+  }
+  .semestre-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pill {
+    padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; border: 1.5px solid var(--border);
+    background: white; color: var(--muted);
+  }
+  .pill.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .pill:hover  { border-color: var(--accent); color: var(--accent); }
+
+  /* ═══ RECOMENDACIONES ═══ */
+  .rec-list { display: flex; flex-direction: column; gap: 10px; }
+  .rec-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 12px 14px; border-radius: 10px;
+    background: #f8f9fa; border-left: 4px solid var(--accent);
+    font-size: 0.83rem; line-height: 1.5;
+  }
+  .rec-item.urgente  { border-left-color: var(--danger);  background: #fdf5f4; }
+  .rec-item.positivo { border-left-color: var(--success); background: #f0faf4; }
+  .rec-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+  /* ═══ RECURSOS ═══ */
+  .recurso-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .recurso-card {
+    border-radius: 10px; padding: 14px; border: 1px solid var(--border);
+    background: white; transition: all 0.2s; cursor: pointer;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .recurso-card:hover { border-color: var(--accent); box-shadow: var(--shadow); transform: translateY(-1px); }
+  .recurso-icon { font-size: 1.5rem; flex-shrink: 0; }
+  .recurso-name { font-size: 0.83rem; font-weight: 700; margin-bottom: 2px; }
+  .recurso-desc { font-size: 0.76rem; color: var(--muted); line-height: 1.4; }
+
+  /* ═══ INSTRUMENTO MODAL ═══ */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55); z-index: 1000;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white; border-radius: 16px; padding: 32px; max-width: 560px; width: 90%;
+    max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg);
+  }
+  .modal h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
+  .modal p  { font-size: 0.85rem; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+  .question-block { margin-bottom: 20px; }
+  .question-block label { display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 10px; line-height: 1.4; }
+  .likert-scale { display: flex; gap: 6px; flex-wrap: wrap; }
+  .likert-btn {
+    flex: 1; min-width: 48px; padding: 8px 4px; border-radius: 8px;
+    border: 1.5px solid var(--border); background: white; cursor: pointer;
+    font-size: 0.82rem; font-weight: 600; text-align: center;
+    transition: all 0.15s; color: var(--muted);
+  }
+  .likert-btn:hover  { border-color: var(--accent); color: var(--accent); }
+  .likert-btn.sel    { background: var(--accent); color: white; border-color: var(--accent); }
+  .progress-bar-wrap { background: #f0f4f8; border-radius: 6px; height: 8px; margin-bottom: 16px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--accent), var(--teal)); transition: width 0.4s; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 24px; }
+  .btn-close { background: #f0f4f8; color: var(--muted); border: none; border-radius: 10px; padding: 10px 18px; cursor: pointer; font-size: 0.88rem; }
+
+  /* ═══ TAB PANELS ═══ */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ═══ CHART COMPAT ═══ */
+  canvas { max-width: 100%; }
+
+  @media (max-width: 900px) {
+    .grid-3, .grid-radar { grid-template-columns: 1fr 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .nd-grid { grid-template-columns: 1fr; }
+    .welcome-actions { display: none; }
+  }
+  @media (max-width: 600px) {
+    main { padding: 16px; }
+    .grid-3, .grid-radar, .grid-2 { grid-template-columns: 1fr; }
+    .header-inner { padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header>
+  <div class="header-inner">
+    <div class="logo-owl">🦉</div>
+    <div class="header-text">
+      <h1>Sistema Atenea AI — Mi Portal</h1>
+      <p>Seguimiento emocional, académico y de aprendizaje · UAQ DTE 2026</p>
+    </div>
+    <div class="header-student">
+      <div class="notification-btn" title="Notificaciones">🔔<span class="notif-dot"></span></div>
+      <div>
+        <div class="student-name">Luis Francisco Pardo</div>
+        <div class="student-info">Doctorado en Tecnología Educativa · Semestre 4</div>
+      </div>
+      <div class="student-avatar">🎓</div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ NAV ═══ -->
+<nav>
+  <div class="nav-inner">
+    <button class="tab-btn active" onclick="showTab('dashboard',this)">🏠 Mi Dashboard</button>
+    <button class="tab-btn" onclick="showTab('aprendizaje',this)">🎨 Estilo de Aprendizaje</button>
+    <button class="tab-btn" onclick="showTab('screening',this)">🧩 Diversidad Cognitiva</button>
+    <button class="tab-btn" onclick="showTab('historial',this)">📈 Mi Historial</button>
+    <button class="tab-btn" onclick="showTab('recursos',this)">🎯 Recursos UAQ</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ══════════════════════════════════
+     TAB 1 — DASHBOARD
+══════════════════════════════════ -->
+<div id="tab-dashboard" class="tab-panel active">
+
+  <!-- Bienvenida -->
+  <div class="welcome-banner">
+    <div class="welcome-icon">✨</div>
+    <div class="welcome-text">
+      <h2>¡Hola, Luis Francisco! Tu bienestar importa.</h2>
+      <p>Esta es tu última evaluación del <strong>Semestre 2026-A</strong>. Tu perfil emocional muestra
+         cambios positivos en Motivación (+0.4) y Bienestar (+0.3) comparado con el semestre anterior.</p>
+    </div>
+    <div class="welcome-actions">
+      <button class="btn-primary" onclick="openModal()">📝 Reaplicar Instrumento</button>
+      <button class="btn-secondary">📄 Descargar Mi Reporte</button>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="grid-3" style="margin-bottom:22px">
+    <!-- Nivel de bienestar general -->
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">💚</span>Bienestar Global</div>
+      <div class="kpi-value" style="color:var(--success)">3.6</div>
+      <div class="kpi-label">Promedio de tus 6 dimensiones</div>
+      <span class="kpi-trend trend-up">▲ +0.31 vs semestre anterior</span>
+    </div>
+    <!-- Nivel de riesgo -->
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">🛡️</span>Nivel de Riesgo Actual</div>
+      <div class="risk-gauge">
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <div class="kpi-value risk-bajo">BAJO</div>
+        </div>
+        <div style="font-size:0.8rem;color:var(--muted);margin-top:4px;text-align:center">
+          Probabilidad estimada: <strong style="color:var(--success)">18%</strong>
+        </div>
+        <div style="margin-top:8px;background:#f0f4f8;border-radius:6px;height:10px;width:100%;overflow:hidden">
+          <div style="width:18%;height:100%;background:var(--success);border-radius:6px;transition:width 1s"></div>
+        </div>
+        <span class="kpi-trend trend-up" style="margin-top:10px">▼ Mejoró desde semestre anterior</span>
+      </div>
+    </div>
+    <!-- Próxima evaluación -->
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">📅</span>Próxima Evaluación</div>
+      <div class="kpi-value" style="color:var(--accent);font-size:1.8rem">Semana 8</div>
+      <div class="kpi-label">Seguimiento semestral recomendado</div>
+      <div class="kpi-sub">Última aplicación: <strong>15 de Marzo, 2026</strong><br>
+        Próxima sugerida: <strong>5 de Mayo, 2026</strong></div>
+      <button onclick="openModal()" style="margin-top:12px;background:var(--accent);color:white;border:none;border-radius:8px;padding:8px 16px;font-size:0.82rem;cursor:pointer;font-weight:600">Aplicar ahora →</button>
+    </div>
+  </div>
+
+  <!-- Radar + Dimensiones -->
+  <div class="grid-radar">
+    <!-- Radar -->
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">🕸️</span>Radar Psicoemocional</div>
+      <div class="radar-wrap">
+        <canvas id="radarChart"></canvas>
+      </div>
+      <div style="font-size:0.74rem;color:var(--muted);text-align:center;margin-top:8px">
+        Azul = actual (Sem 2026-A) · Gris = anterior (Sem 2025-B)
+      </div>
+    </div>
+
+    <!-- Dimensiones detalle -->
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">📊</span>Mis 6 Dimensiones</div>
+      <div class="dim-list" id="dimList"></div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;font-weight:600">Escala: 1 (bajo) → 5 (alto)</div>
+        <div style="font-size:0.78rem;color:var(--muted);line-height:1.5">
+          ⚠️ Las dimensiones con puntuación menor a 2.5 son áreas de atención prioritaria.<br>
+          Habla con tu orientador si alguna dimensión está en rojo dos semestres seguidos.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recomendaciones personales -->
+  <div class="card" style="margin-bottom:22px">
+    <div class="card-title"><span class="card-title-icon">💡</span>Recomendaciones Personalizadas para Ti</div>
+    <div class="rec-list" id="recList"></div>
+  </div>
+
+</div>
+
+
+<!-- ══════════════════════════════════
+     TAB 2 — ESTILO DE APRENDIZAJE
+══════════════════════════════════ -->
+<div id="tab-aprendizaje" class="tab-panel">
+
+  <div class="grid-2">
+    <!-- Perfil -->
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">🎨</span>Tu Perfil de Aprendizaje</div>
+
+      <div class="estilo-badge">
+        <div class="estilo-icon">🤝</div>
+        <div>
+          <div class="estilo-name">Social-Colaborativo</div>
+          <div class="estilo-sub">Estilo primario · Con rasgos Reflexivo-Analítico</div>
+        </div>
+      </div>
+
+      <p style="font-size:0.85rem;color:var(--text);line-height:1.6;margin-bottom:16px">
+        Aprendes mejor cuando puedes <strong>discutir ideas con otras personas</strong>, explicar conceptos en voz alta y trabajar en equipo.
+        Tu componente reflexivo te da la capacidad de analizar en profundidad antes de actuar —
+        una combinación muy efectiva para la investigación doctoral.
+      </p>
+
+      <div class="card-title" style="margin-bottom:10px">Puntuaciones por estilo</div>
+      <div class="estilo-bars" id="estilosBars"></div>
+    </div>
+
+    <!-- Estrategias -->
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">🎯</span>Tus 5 Estrategias de Estudio</div>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:14px;line-height:1.5">
+        Basadas en tu perfil Social-Colaborativo/Reflexivo. Funcionan mejor para ti específicamente.
+      </p>
+      <ul class="estrategias-list" id="estrategiasList"></ul>
+
+      <div style="margin-top:18px;padding:14px;background:#f3e5f5;border-radius:10px">
+        <div style="font-size:0.82rem;font-weight:700;color:var(--violet);margin-bottom:6px">
+          🌐 Compatibilidad con Educación Virtual
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="flex:1;background:#e0e0e0;border-radius:5px;height:8px;overflow:hidden">
+            <div style="width:45%;height:100%;background:var(--violet);border-radius:5px"></div>
+          </div>
+          <span style="font-size:0.82rem;font-weight:700;color:var(--violet)">45%</span>
+        </div>
+        <p style="font-size:0.76rem;color:#6c3483;margin-top:6px;line-height:1.4">
+          Tu estilo Social requiere más interacción en persona. En modalidad virtual,
+          busca foros activos, videollamadas grupales y herramientas colaborativas como Miro o Notion.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comparativa estilos chart -->
+  <div class="card">
+    <div class="card-title"><span class="card-title-icon">📊</span>Distribución Visual de Estilos — Mi Perfil vs. Promedio UAQ</div>
+    <div style="height:220px;position:relative">
+      <canvas id="estilosChart"></canvas>
+    </div>
+    <p style="font-size:0.77rem;color:var(--muted);margin-top:10px;line-height:1.5">
+      Tu estilo Social-Colaborativo está significativamente por encima del promedio de tu programa,
+      lo que sugiere que los entornos de aprendizaje grupal son especialmente productivos para ti.
+    </p>
+  </div>
+
+</div>
+
+
+<!-- ══════════════════════════════════
+     TAB 3 — DIVERSIDAD COGNITIVA / SCREENING
+══════════════════════════════════ -->
+<div id="tab-screening" class="tab-panel">
+
+  <!-- Aviso legal siempre visible -->
+  <div class="aviso-nd">
+    <div class="aviso-nd-icon">⚠️</div>
+    <div>
+      <strong>Aviso importante:</strong> Esta sección muestra <em>indicadores orientativos</em>, NO diagnósticos clínicos.
+      La neurodivergencia es una variante de la diversidad humana, no un déficit.
+      Si algún indicador es relevante para ti, considera consultar con un profesional de salud mental.
+      <strong>Esta información es completamente confidencial y solo tú puedes verla.</strong>
+    </div>
+  </div>
+
+  <div class="nd-grid" id="ndGrid"></div>
+
+  <!-- Derivación -->
+  <div class="nd-derivacion" id="ndDerivacion" style="display:none">
+    <div class="nd-derivacion-icon">🏥</div>
+    <div>
+      <h4>Servicio de Apoyo Estudiantil UAQ</h4>
+      <p>Tienes indicadores en una o más áreas que podrían beneficiarse de una evaluación especializada.
+         Recuerda que el apoyo no es debilidad — es inteligencia emocional.
+         Puedes contactar al <strong>Centro de Atención Psicológica Integral (CAPSI)</strong>:
+         <a href="#">ext. 1147</a> · <a href="#">capsi@uaq.mx</a> · Edificio Central, Planta Baja.</p>
+    </div>
+  </div>
+
+  <!-- Qué significa esto -->
+  <div class="card" style="margin-top:18px">
+    <div class="card-title"><span class="card-title-icon">💬</span>¿Qué significa la neurodivergencia en el contexto académico?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:4px">
+      <div style="padding:14px;background:#f0faf4;border-radius:10px">
+        <div style="font-size:1.2rem;margin-bottom:6px">🔬</div>
+        <div style="font-size:0.83rem;font-weight:700;margin-bottom:4px">Es una diferencia, no un déficit</div>
+        <div style="font-size:0.78rem;color:var(--muted);line-height:1.5">Las personas neurodivergentes frecuentemente tienen fortalezas únicas: pensamiento divergente, hiperfocus, creatividad lateral.</div>
+      </div>
+      <div style="padding:14px;background:#f0f4fd;border-radius:10px">
+        <div style="font-size:1.2rem;margin-bottom:6px">🎓</div>
+        <div style="font-size:0.83rem;font-weight:700;margin-bottom:4px">Ajustes razonables</div>
+        <div style="font-size:0.78rem;color:var(--muted);line-height:1.5">Con documentación clínica puedes solicitar tiempo extra en exámenes, acceso anticipado a materiales y otros apoyos formales en UAQ.</div>
+      </div>
+      <div style="padding:14px;background:#fef9f0;border-radius:10px">
+        <div style="font-size:1.2rem;margin-bottom:6px">🛠️</div>
+        <div style="font-size:0.83rem;font-weight:700;margin-bottom:4px">Tecnología de apoyo</div>
+        <div style="font-size:0.78rem;color:var(--muted);line-height:1.5">Texto a voz, organizadores visuales, apps de gestión del tiempo y IA como Claude Code pueden funcionar como sistemas instrumentales de apoyo cognitivo.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ══════════════════════════════════
+     TAB 4 — HISTORIAL
+══════════════════════════════════ -->
+<div id="tab-historial" class="tab-panel">
+
+  <div class="card" style="margin-bottom:22px">
+    <div class="historial-header">
+      <div class="card-title" style="margin-bottom:0"><span class="card-title-icon">📈</span>Trayectoria Emocional</div>
+      <div class="semestre-pills">
+        <span class="pill">2024-B</span>
+        <span class="pill">2025-A</span>
+        <span class="pill active">2025-B</span>
+        <span class="pill">2026-A ←actual</span>
+      </div>
+    </div>
+    <div style="height:260px;position:relative">
+      <canvas id="historialChart"></canvas>
+    </div>
+    <p style="font-size:0.78rem;color:var(--muted);margin-top:10px;line-height:1.5">
+      📊 <strong>Tendencia positiva</strong>: Tu Motivación y Bienestar Emocional han mejorado consistentemente
+      en los últimos 3 semestres. La Afiliación Institucional tuvo un descenso en 2025-A pero se ha recuperado.
+    </p>
+  </div>
+
+  <!-- Tabla histórica -->
+  <div class="card">
+    <div class="card-title"><span class="card-title-icon">📋</span>Historial de Aplicaciones del Instrumento</div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:0.83rem">
+        <thead>
+          <tr style="background:#f8f9fa;text-align:left">
+            <th style="padding:10px 14px;color:var(--muted);font-weight:600;border-bottom:2px solid var(--border)">Fecha</th>
+            <th style="padding:10px 14px;color:var(--muted);font-weight:600;border-bottom:2px solid var(--border)">Semestre</th>
+            <th style="padding:10px 14px;color:var(--muted);font-weight:600;border-bottom:2px solid var(--border)">D1 Bienestar</th>
+            <th style="padding:10px 14px;color:var(--muted);font-weight:600;border-bottom:2px solid var(--border)">D2 Autopercepción</th>
+            <th style="padding:10px 14px;color:var(--muted);font-weight:600;border-bottom:2px solid var(--border)">D3 Motivación</th>
+            <th style="padding:10px 14px;color:var(--muted);font-weight:600;border-bottom:2px solid var(--border)">D4 Resiliencia</th>
+            <th style="padding:10px 14px;color:var(--muted);font-weight:600;border-bottom:2px solid var(--border)">D5 Relaciones</th>
+            <th style="padding:10px 14px;color:var(--muted);font-weight:600;border-bottom:2px solid var(--border)">D6 Afiliación</th>
+            <th style="padding:10px 14px;color:var(--muted);font-weight:600;border-bottom:2px solid var(--border)">Riesgo</th>
+          </tr>
+        </thead>
+        <tbody id="historialTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ══════════════════════════════════
+     TAB 5 — RECURSOS
+══════════════════════════════════ -->
+<div id="tab-recursos" class="tab-panel">
+
+  <div class="card" style="margin-bottom:22px">
+    <div class="card-title"><span class="card-title-icon">🎯</span>Recursos Recomendados para Tu Perfil</div>
+    <p style="font-size:0.84rem;color:var(--muted);margin-bottom:16px;line-height:1.5">
+      Seleccionados específicamente para tu perfil <strong>Social-Colaborativo</strong> con indicadores de bienestar emocional medio.
+    </p>
+    <div class="recurso-grid" id="recursoGrid"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="card-title-icon">📞</span>Contactos de Apoyo Institucional UAQ</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+      <div style="padding:14px;border:1px solid var(--border);border-radius:10px">
+        <div style="font-size:1.3rem;margin-bottom:6px">🏥</div>
+        <div style="font-size:0.88rem;font-weight:700;margin-bottom:4px">CAPSI</div>
+        <div style="font-size:0.78rem;color:var(--muted);line-height:1.5">Centro de Atención Psicológica Integral<br>Ext. 1147<br>capsi@uaq.mx</div>
+      </div>
+      <div style="padding:14px;border:1px solid var(--border);border-radius:10px">
+        <div style="font-size:1.3rem;margin-bottom:6px">📚</div>
+        <div style="font-size:0.88rem;font-weight:700;margin-bottom:4px">Programa Tutoral</div>
+        <div style="font-size:0.78rem;color:var(--muted);line-height:1.5">Apoyo académico personalizado<br>Coordinación de tu programa<br>Solicitar en ventanilla</div>
+      </div>
+      <div style="padding:14px;border:1px solid var(--border);border-radius:10px">
+        <div style="font-size:1.3rem;margin-bottom:6px">🤝</div>
+        <div style="font-size:0.88rem;font-weight:700;margin-bottom:4px">Tutoría de Pares</div>
+        <div style="font-size:0.78rem;color:var(--muted);line-height:1.5">Red de monitores estudiantiles<br>Servicios Escolares UAQ<br>tutoriapares@uaq.mx</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</main>
+
+<!-- ══════════════════════════════════
+     MODAL — INSTRUMENTO
+══════════════════════════════════ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <h3>📝 Aplicación Rápida del Instrumento</h3>
+    <p>Responde estas preguntas con honestidad. No hay respuestas correctas ni incorrectas.
+       Tus respuestas son completamente confidenciales.</p>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="instrProgressBar" style="width:0%"></div>
+    </div>
+    <div style="font-size:0.78rem;color:var(--muted);text-align:right;margin-bottom:16px" id="instrProgress">Pregunta 1 de 6</div>
+
+    <div id="instrQuestions"></div>
+
+    <div class="modal-actions">
+      <button class="btn-close" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" style="flex:1;background:var(--accent);color:white;padding:10px 20px;border-radius:10px;border:none;font-weight:700;cursor:pointer" onclick="submitInstrument()">
+        Guardar y Actualizar Mi Perfil
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// DATA — perfil del estudiante
+// ═══════════════════════════════════════════════════════════
+
+const PERFIL = {
+  nombre: "Luis Francisco Pardo",
+  semestre: 4,
+  area: "Doctorado en Tecnología Educativa",
+  // Dimensiones: [actual, semestre_anterior]
+  dims: [
+    { key:'d1', nombre:'Bienestar Emocional',       icono:'❤️',  color:'var(--d1)', val:3.2, prev:2.9 },
+    { key:'d2', nombre:'Autopercepción Académica',  icono:'💡',  color:'var(--d2)', val:3.8, prev:3.5 },
+    { key:'d3', nombre:'Motivación y Compromiso',   icono:'🔥',  color:'var(--d3)', val:4.1, prev:3.7 },
+    { key:'d4', nombre:'Resiliencia Académica',     icono:'💪',  color:'var(--d4)', val:3.5, prev:3.4 },
+    { key:'d5', nombre:'Relaciones Interpersonales',icono:'🤝',  color:'var(--d5)', val:4.2, prev:4.0 },
+    { key:'d6', nombre:'Afiliación Institucional',  icono:'🏛️',  color:'var(--d6)', val:3.3, prev:2.8 },
+  ],
+  historial: [
+    { fecha:'Sep 2024', sem:'2024-B', d:[2.5,3.0,3.1,3.2,3.8,2.5], riesgo:'medio' },
+    { fecha:'Ene 2025', sem:'2025-A', d:[2.8,3.3,3.5,3.3,3.9,2.3], riesgo:'medio' },
+    { fecha:'Ago 2025', sem:'2025-B', d:[2.9,3.5,3.7,3.4,4.0,2.8], riesgo:'bajo'  },
+    { fecha:'Mar 2026', sem:'2026-A', d:[3.2,3.8,4.1,3.5,4.2,3.3], riesgo:'bajo'  },
+  ]
+};
+
+const ESTILOS_DATA = {
+  social:       { nombre:'Social-Colaborativo',  icono:'🤝', color:'#9b59b6', val:78.9 },
+  reflexivo:    { nombre:'Reflexivo-Analítico',  icono:'🧠', color:'#1abc9c', val:74.5 },
+  kinestesico:  { nombre:'Kinestésico-Práctico', icono:'🤲', color:'#e67e22', val:67.2 },
+  lectoescrit:  { nombre:'Lectoescritor',        icono:'📖', color:'#3498db', val:50.7 },
+  auditivo:     { nombre:'Auditivo-Verbal',      icono:'🎧', color:'#2ecc71', val:49.3 },
+  visual:       { nombre:'Visual-Espacial',      icono:'👁️', color:'#e74c3c', val:41.6 },
+};
+
+const ESTRATEGIAS = [
+  'Organiza grupos de estudio y explica los temas a tus compañeros — esta es tu forma más efectiva de aprender',
+  'Participa activamente en foros, discusiones y actividades en clase — no te quedes en modo observador',
+  'Busca proyectos colaborativos donde puedas asumir un rol de liderazgo compartido con otros',
+  'Dedica 10 minutos al final de cada clase para escribir: ¿qué aprendí? ¿qué preguntas me quedan?',
+  '⭐ Conecta explícitamente cada tema nuevo con algo que ya sabías — tu componente reflexivo lo aprovechará'
+];
+
+const ND_DATA = [
+  { id:'tdah',  nombre:'TDAH',          icono:'⚡', score:45, nivel:'medio',
+    desc:'Se observan algunos patrones que pueden relacionarse con dificultades atencionales. Puede valer la pena explorar estrategias de organización específicas.' },
+  { id:'tea',   nombre:'Espectro TEA',  icono:'🧩', score:12, nivel:'bajo',
+    desc:'No se observan indicadores significativos en esta área en este momento.' },
+  { id:'dislex',nombre:'Procesamiento', icono:'📝', score:20, nivel:'bajo',
+    desc:'No se observan indicadores de dificultades de procesamiento lector-escritor significativos.' },
+  { id:'ansied',nombre:'Ansiedad Acad.',icono:'🌊', score:28, nivel:'bajo',
+    desc:'Nivel de ansiedad académica dentro de rango esperado para tu etapa doctoral.' },
+];
+
+const RECOMENDACIONES = [
+  { tipo:'positivo', icono:'🌱', texto:'Tu Motivación y Compromiso han mejorado 0.4 puntos desde el semestre pasado. ¡Sigue así! Este es el predictor más importante del éxito académico.' },
+  { tipo:'normal',   icono:'⚡', texto:'Tu perfil TDAH muestra indicadores medios. Intenta la técnica Pomodoro (25 min trabajo / 5 min descanso) para tus sesiones de escritura doctoral.' },
+  { tipo:'normal',   icono:'🤝', texto:'Tu Afiliación Institucional mejoró 0.5 puntos este semestre. Mantén la participación en actividades del programa — esto protege contra el aislamiento doctoral.' },
+  { tipo:'normal',   icono:'🧠', texto:'Tu Resiliencia Académica es moderada. Si enfrentas un rechazo de artículo o retroalimentación crítica del sinodo, date 24h para procesar antes de responder.' },
+];
+
+const RECURSOS = [
+  { icono:'🤝', nombre:'Programa de Monitores y Tutores Pares UAQ', desc:'Ideal para tu estilo Social. Grupos de estudio y tutoría entre pares.' },
+  { icono:'🏥', nombre:'CAPSI UAQ — Atención Psicológica', desc:'Centro de Atención Psicológica. Ext. 1147. Sesiones individuales y grupales.' },
+  { icono:'💪', nombre:'Programa Tutoral UAQ', desc:'Apoyo académico personalizado. Solicitar en coordinación de tu programa.' },
+  { icono:'🎯', nombre:'Actividades de Extensión UAQ', desc:'Eventos, congresos y vinculación. Fortalece tu Afiliación Institucional.' },
+  { icono:'🌱', nombre:'Taller de Bienestar Emocional', desc:'Bienestar Estudiantil UAQ. Estrategias de autocuidado para estudiantes.' },
+  { icono:'📱', nombre:'App Forest / Focusmate', desc:'Gestión del tiempo y co-working virtual. Útil para gestionar la atención.' },
+];
+
+// ═══════════════════════════════════════════════════════════
+// RENDER FUNCIONES
+// ═══════════════════════════════════════════════════════════
+
+function renderDimList() {
+  const container = document.getElementById('dimList');
+  container.innerHTML = PERFIL.dims.map(d => {
+    const pct = ((d.val - 1) / 4 * 100).toFixed(0);
+    const delta = (d.val - d.prev).toFixed(1);
+    const deltaClass = delta > 0 ? 'delta-up' : delta < 0 ? 'delta-down' : 'delta-flat';
+    const deltaSign = delta > 0 ? '▲' : delta < 0 ? '▼' : '—';
+    const barColor = d.val >= 3.5 ? 'var(--success)' : d.val >= 2.5 ? 'var(--warning)' : 'var(--danger)';
+    return `<div class="dim-row">
+      <span class="dim-icon">${d.icono}</span>
+      <span class="dim-name">${d.nombre}</span>
+      <div class="dim-bar-wrap">
+        <div class="dim-bar" style="width:${pct}%;background:${barColor}"></div>
+      </div>
+      <span class="dim-score" style="color:${barColor}">${d.val}</span>
+      <span class="dim-delta ${deltaClass}">${deltaSign}${Math.abs(delta)}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderRecList() {
+  const container = document.getElementById('recList');
+  container.innerHTML = RECOMENDACIONES.map(r =>
+    `<div class="rec-item ${r.tipo}">
+      <span class="rec-icon">${r.icono}</span>
+      <span>${r.texto}</span>
+    </div>`
+  ).join('');
+}
+
+function renderEstilosBars() {
+  const container = document.getElementById('estilosBars');
+  container.innerHTML = Object.entries(ESTILOS_DATA).map(([k,e]) =>
+    `<div class="estilo-bar-row">
+      <span class="estilo-bar-label">${e.icono} ${e.nombre}</span>
+      <div class="estilo-bar-wrap">
+        <div class="estilo-bar-fill" style="width:${e.val}%;background:${e.color}"></div>
+      </div>
+      <span class="estilo-bar-val">${e.val}</span>
+    </div>`
+  ).join('');
+}
+
+function renderEstrategias() {
+  document.getElementById('estrategiasList').innerHTML =
+    ESTRATEGIAS.map(e => `<li>${e}</li>`).join('');
+}
+
+function renderNDGrid() {
+  const container = document.getElementById('ndGrid');
+  container.innerHTML = ND_DATA.map(nd => {
+    const fillColor = nd.nivel === 'bajo' ? 'var(--success)' : nd.nivel === 'medio' ? 'var(--warning)' : 'var(--danger)';
+    return `<div class="nd-card nivel-${nd.nivel}">
+      <div class="nd-header">
+        <span class="nd-icon">${nd.icono}</span>
+        <span class="nd-name">${nd.nombre}</span>
+        <span class="nd-nivel-badge badge-${nd.nivel}">${nd.nivel}</span>
+      </div>
+      <div class="nd-score-bar">
+        <div class="nd-score-fill" style="width:${nd.score}%;background:${fillColor}"></div>
+      </div>
+      <p class="nd-desc">${nd.desc}</p>
+    </div>`;
+  }).join('');
+
+  const hasActive = ND_DATA.some(nd => nd.nivel !== 'bajo');
+  document.getElementById('ndDerivacion').style.display = hasActive ? 'flex' : 'none';
+}
+
+function renderRecursos() {
+  document.getElementById('recursoGrid').innerHTML = RECURSOS.map(r =>
+    `<div class="recurso-card">
+      <div class="recurso-icon">${r.icono}</div>
+      <div>
+        <div class="recurso-name">${r.nombre}</div>
+        <div class="recurso-desc">${r.desc}</div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+function renderHistorialTable() {
+  const tbody = document.getElementById('historialTableBody');
+  tbody.innerHTML = [...PERFIL.historial].reverse().map((h, i) => {
+    const isLatest = i === 0;
+    const rColor = h.riesgo === 'bajo' ? 'var(--success)' : h.riesgo === 'medio' ? 'var(--warning)' : 'var(--danger)';
+    return `<tr style="${isLatest ? 'background:#f0faf4;font-weight:600' : ''}">
+      <td style="padding:10px 14px;border-bottom:1px solid var(--border)">${h.fecha}${isLatest ? ' ★' : ''}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid var(--border)">${h.sem}</td>
+      ${h.d.map(v => {
+        const c = v >= 3.5 ? 'var(--success)' : v >= 2.5 ? 'var(--warning)' : 'var(--danger)';
+        return `<td style="padding:10px 14px;border-bottom:1px solid var(--border);color:${c};font-weight:700">${v.toFixed(1)}</td>`;
+      }).join('')}
+      <td style="padding:10px 14px;border-bottom:1px solid var(--border)">
+        <span style="background:${rColor}22;color:${rColor};padding:3px 10px;border-radius:10px;font-size:0.78rem;font-weight:700">${h.riesgo}</span>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// CHARTS
+// ═══════════════════════════════════════════════════════════
+
+let radarChartInst = null;
+function renderRadarChart() {
+  if (radarChartInst) radarChartInst.destroy();
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  radarChartInst = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: PERFIL.dims.map(d => d.nombre.replace(' y ', '\ny ').replace('Interpersonales', '\nInterpersonales')),
+      datasets: [
+        {
+          label: 'Sem 2026-A (actual)',
+          data: PERFIL.dims.map(d => d.val),
+          backgroundColor: 'rgba(41,128,185,0.18)',
+          borderColor: '#2980b9',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#2980b9',
+          pointRadius: 5,
+          pointHoverRadius: 7,
+        },
+        {
+          label: 'Sem 2025-B (anterior)',
+          data: PERFIL.dims.map(d => d.prev),
+          backgroundColor: 'rgba(180,180,180,0.08)',
+          borderColor: '#bdc3c7',
+          borderWidth: 1.5,
+          borderDash: [5, 4],
+          pointBackgroundColor: '#bdc3c7',
+          pointRadius: 3,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 14, padding: 14 } } },
+      scales: {
+        r: {
+          min: 1, max: 5, ticks: { stepSize: 1, font: { size: 10 }, backdropColor: 'transparent' },
+          pointLabels: { font: { size: 10 } },
+          grid: { color: '#e0e6ed' },
+          angleLines: { color: '#e0e6ed' },
+        }
+      }
+    }
+  });
+}
+
+let estilosChartInst = null;
+function renderEstilosChart() {
+  if (estilosChartInst) estilosChartInst.destroy();
+  const ctx = document.getElementById('estilosChart').getContext('2d');
+  const labels = Object.values(ESTILOS_DATA).map(e => e.nombre);
+  const myVals = Object.values(ESTILOS_DATA).map(e => e.val);
+  // Valores promedio UAQ (simulado)
+  const uaqAvg = [62, 54, 48, 45, 41, 38];
+  const colors = Object.values(ESTILOS_DATA).map(e => e.color);
+  estilosChartInst = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Tú', data: myVals, backgroundColor: colors.map(c => c + 'bb'), borderColor: colors, borderWidth: 2, borderRadius: 6 },
+        { label: 'Promedio UAQ', data: uaqAvg, backgroundColor: 'rgba(180,180,180,0.25)', borderColor: '#bdc3c7', borderWidth: 1.5, borderRadius: 6 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 12 } } },
+      scales: {
+        y: { min: 0, max: 100, ticks: { font: { size: 10 } }, grid: { color: '#f0f4f8' } },
+        x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+let historialChartInst = null;
+function renderHistorialChart() {
+  if (historialChartInst) historialChartInst.destroy();
+  const ctx = document.getElementById('historialChart').getContext('2d');
+  const labels = PERFIL.historial.map(h => h.sem);
+  const colores = ['var(--d1)','var(--d2)','var(--d3)','var(--d4)','var(--d5)','var(--d6)'];
+  historialChartInst = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: PERFIL.dims.map((d, i) => ({
+        label: d.nombre,
+        data: PERFIL.historial.map(h => h.d[i]),
+        borderColor: d.color,
+        backgroundColor: 'transparent',
+        borderWidth: 2.5,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        tension: 0.3,
+      }))
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'right', labels: { font: { size: 10 }, boxWidth: 14, padding: 10 } } },
+      scales: {
+        y: { min: 1, max: 5, ticks: { stepSize: 0.5, font: { size: 10 } }, grid: { color: '#f0f4f8' } },
+        x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════════════
+
+function showTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  // Render charts on demand
+  setTimeout(() => {
+    if (id === 'dashboard')    renderRadarChart();
+    if (id === 'aprendizaje')  renderEstilosChart();
+    if (id === 'historial')    renderHistorialChart();
+  }, 50);
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODAL — INSTRUMENTO
+// ═══════════════════════════════════════════════════════════
+
+const PREGUNTAS = [
+  { dim:'D1', texto:'En la última semana, ¿cómo describirías tu estado emocional general?' },
+  { dim:'D2', texto:'¿Qué tan capaz te sientes de cumplir con las demandas académicas actuales?' },
+  { dim:'D3', texto:'¿Con qué frecuencia te sientes motivado para estudiar o avanzar en tu tesis?' },
+  { dim:'D4', texto:'Cuando enfrentas un obstáculo académico (rechazo, error, crítica), ¿cómo lo manejas?' },
+  { dim:'D5', texto:'¿Qué tan satisfecho estás con tus relaciones con compañeros y colegas del programa?' },
+  { dim:'D6', texto:'¿Qué tanto sientes que perteneces y eres parte del programa de tu institución?' },
+];
+const LIKERT_LABELS = ['Muy bajo / Nunca', 'Bajo / Pocas veces', 'Regular / A veces', 'Alto / Frecuentemente', 'Muy alto / Siempre'];
+let instrRespuestas = {};
+
+function openModal() {
+  instrRespuestas = {};
+  renderInstrModal(0);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function renderInstrModal(currentIdx) {
+  const container = document.getElementById('instrQuestions');
+  const progress  = document.getElementById('instrProgress');
+  const progBar   = document.getElementById('instrProgressBar');
+
+  progBar.style.width = ((currentIdx / PREGUNTAS.length) * 100) + '%';
+  progress.textContent = `Pregunta ${currentIdx + 1} de ${PREGUNTAS.length}`;
+
+  container.innerHTML = PREGUNTAS.map((q, i) => {
+    const isActive = i === currentIdx;
+    const isSel = instrRespuestas[i] !== undefined;
+    return `<div class="question-block" style="${!isActive ? 'display:none' : ''}">
+      <label>${q.dim} — ${q.texto}</label>
+      <div class="likert-scale">
+        ${LIKERT_LABELS.map((l, v) =>
+          `<button class="likert-btn ${instrRespuestas[i] === v+1 ? 'sel' : ''}"
+            onclick="selectLikert(${i}, ${v+1}, ${PREGUNTAS.length})" title="${l}">${v+1}<br><small>${['😟','😐','🙂','😊','😄'][v]}</small></button>`
+        ).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectLikert(qIdx, val, total) {
+  instrRespuestas[qIdx] = val;
+  const nextIdx = qIdx + 1;
+  if (nextIdx < total) {
+    setTimeout(() => renderInstrModal(nextIdx), 200);
+  } else {
+    document.getElementById('instrProgress').textContent = '✅ Todas las preguntas respondidas';
+    document.getElementById('instrProgressBar').style.width = '100%';
+  }
+}
+
+function submitInstrument() {
+  const answered = Object.keys(instrRespuestas).length;
+  if (answered < PREGUNTAS.length) {
+    alert(`Por favor responde todas las preguntas (${answered}/${PREGUNTAS.length} respondidas)`);
+    return;
+  }
+  // Actualizar dimensiones con nuevos valores (simulado)
+  Object.keys(instrRespuestas).forEach((idx, i) => {
+    if (PERFIL.dims[idx]) {
+      PERFIL.dims[idx].prev = PERFIL.dims[idx].val;
+      PERFIL.dims[idx].val  = parseFloat((instrRespuestas[idx] * 0.9 + Math.random() * 0.2).toFixed(1));
+      if (PERFIL.dims[idx].val > 5) PERFIL.dims[idx].val = 5;
+    }
+  });
+  closeModal();
+  renderDimList();
+  setTimeout(renderRadarChart, 100);
+  alert('✅ ¡Respuestas guardadas! Tu perfil ha sido actualizado con las nuevas puntuaciones.');
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderDimList();
+  renderRecList();
+  renderEstilosBars();
+  renderEstrategias();
+  renderNDGrid();
+  renderRecursos();
+  renderHistorialTable();
+  renderRadarChart();
+});
+</script>
+</body>
+</html>
