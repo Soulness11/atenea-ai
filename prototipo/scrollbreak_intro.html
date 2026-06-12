@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScrollBreak — Presentación</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --accent:  #6c63ff;
+  --accent2: #00d4aa;
+  --dark:    #0d0f1c;
+  --surface: #151724;
+  --card:    #1c1f31;
+  --border:  #2a2e47;
+  --text:    #e8eaf0;
+  --muted:   #7a7f9a;
+  --green:   #4caf50;
+  --warn:    #ffaa00;
+  --danger:  #ff5252;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--dark);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 24px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% -10%, rgba(108,99,255,0.25) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 80% 80%, rgba(0,212,170,0.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+.hero-badge {
+  background: rgba(108,99,255,0.15);
+  border: 1px solid rgba(108,99,255,0.35);
+  color: #a59fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 6px 18px;
+  border-radius: 20px;
+  margin-bottom: 28px;
+}
+.hero-title {
+  font-size: clamp(42px, 8vw, 80px);
+  font-weight: 900;
+  letter-spacing: -2px;
+  line-height: 1.05;
+  margin-bottom: 12px;
+}
+.hero-title .grad {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero-subtitle {
+  font-size: clamp(16px, 2.5vw, 22px);
+  color: var(--muted);
+  max-width: 580px;
+  margin: 0 auto 40px;
+}
+.hero-subtitle b { color: var(--text); }
+.hero-cta-group { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  color: white; padding: 14px 28px; border-radius: 12px;
+  font-size: 16px; font-weight: 700; text-decoration: none;
+  transition: transform 0.15s, opacity 0.15s;
+  border: none; cursor: pointer;
+}
+.btn-primary:hover { transform: translateY(-2px); opacity: 0.92; }
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--text); padding: 14px 28px; border-radius: 12px;
+  font-size: 16px; font-weight: 600; text-decoration: none;
+  transition: border-color 0.15s;
+}
+.btn-secondary:hover { border-color: var(--accent); }
+.scroll-hint {
+  position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  color: var(--muted); font-size: 12px;
+  animation: bounce 2s infinite;
+}
+@keyframes bounce {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50%      { transform: translateX(-50%) translateY(6px); }
+}
+
+/* ── SECTION BASE ── */
+section {
+  padding: 80px 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.section-tag {
+  display: inline-block;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--accent2); margin-bottom: 12px;
+}
+.section-title {
+  font-size: clamp(26px, 4vw, 40px);
+  font-weight: 900; letter-spacing: -0.5px;
+  margin-bottom: 10px;
+}
+.section-lead {
+  font-size: 17px; color: var(--muted); max-width: 620px;
+  margin-bottom: 48px;
+}
+
+/* ── DIVIDER ── */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  max-width: 800px; margin: 0 auto;
+}
+
+/* ── STATS STRIP ── */
+.stats-strip {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 40px 24px;
+}
+.stats-inner {
+  max-width: 900px; margin: 0 auto;
+  display: flex; flex-wrap: wrap; gap: 0;
+}
+.stat-item {
+  flex: 1; min-width: 180px;
+  text-align: center; padding: 20px 16px;
+  border-right: 1px solid var(--border);
+}
+.stat-item:last-child { border-right: none; }
+.stat-val {
+  font-size: 40px; font-weight: 900; letter-spacing: -1px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.stat-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.stat-source { font-size: 11px; color: #4a4f6a; margin-top: 2px; }
+
+/* ── PROBLEM CARDS ── */
+.problem-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+.problem-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px;
+  transition: border-color 0.2s;
+}
+.problem-card:hover { border-color: rgba(108,99,255,0.4); }
+.problem-card .icon { font-size: 28px; margin-bottom: 12px; }
+.problem-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.problem-card p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.problem-card .metric { font-size: 22px; font-weight: 900; color: var(--danger); margin-top: 10px; }
+
+/* ── HOW IT WORKS ── */
+.steps { display: flex; flex-direction: column; gap: 0; position: relative; }
+.steps::before {
+  content: '';
+  position: absolute;
+  left: 28px; top: 56px; bottom: 56px;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--accent), var(--accent2));
+  opacity: 0.3;
+}
+.step {
+  display: flex; gap: 24px; align-items: flex-start;
+  padding: 24px 0;
+}
+.step-num {
+  width: 56px; height: 56px; border-radius: 16px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 900; position: relative; z-index: 1;
+}
+.step-body { padding-top: 10px; }
+.step-body h3 { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+.step-body p { font-size: 14px; color: var(--muted); max-width: 520px; }
+.step-body .tag {
+  display: inline-block; margin-top: 8px;
+  background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.25);
+  color: var(--accent2); font-size: 11px; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px;
+}
+
+/* ── CHALLENGES PREVIEW ── */
+.challenges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+.challenge-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.challenge-card:hover { transform: translateY(-3px); border-color: rgba(108,99,255,0.5); }
+.challenge-card .track-pill {
+  display: inline-block;
+  background: rgba(108,99,255,0.15); color: #a59fff;
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 3px 10px; border-radius: 20px; margin-bottom: 12px;
+}
+.challenge-card h3 { font-size: 15px; font-weight: 800; margin-bottom: 6px; }
+.challenge-card p { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 14px; }
+.challenge-card .xp-chip {
+  background: rgba(245,158,11,0.15); color: #f59e0b;
+  font-size: 11px; font-weight: 700;
+  padding: 4px 12px; border-radius: 20px; display: inline-block;
+}
+.code-preview {
+  background: #0d0f1a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: 'SF Mono', 'Monaco', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  margin-bottom: 12px;
+  color: #c3e88d;
+}
+.code-preview .kw { color: #c792ea; }
+.code-preview .fn { color: #82aaff; }
+.code-preview .num { color: #f78c6c; }
+.code-preview .cm { color: #546e7a; }
+
+/* ── INSTALL GUIDE ── */
+.install-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+@media (max-width: 640px) { .install-wrap { grid-template-columns: 1fr; } }
+.install-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px;
+}
+.install-card.featured {
+  border-color: rgba(108,99,255,0.5);
+  background: linear-gradient(135deg, rgba(108,99,255,0.08), rgba(0,212,170,0.04));
+}
+.install-card .card-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+}
+.install-card .card-icon { font-size: 32px; }
+.install-card .card-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.install-card .card-label.primary { color: var(--accent2); }
+.install-card .card-label.secondary { color: var(--muted); }
+.install-card h3 { font-size: 17px; font-weight: 800; margin-top: 2px; }
+.install-step {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.install-step:last-of-type { border-bottom: none; }
+.step-circle {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(108,99,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800; color: #a59fff;
+}
+.install-step .step-text { font-size: 14px; padding-top: 4px; }
+.install-step .step-text b { color: var(--text); }
+.install-step .step-text span { color: var(--muted); font-size: 13px; }
+.url-box {
+  background: #0d0f1a;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--accent2);
+  word-break: break-all;
+  margin: 16px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.copy-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--muted); font-size: 11px; font-weight: 700;
+  padding: 4px 10px; border-radius: 6px; cursor: pointer;
+  white-space: nowrap; flex-shrink: 0;
+}
+.copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── DEMO CONTROLS GUIDE ── */
+.controls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+.control-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 18px;
+}
+.control-card .ctrl-icon { font-size: 24px; margin-bottom: 8px; }
+.control-card h4 { font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+.control-card p { font-size: 13px; color: var(--muted); }
+
+/* ── THEORY BOX ── */
+.theory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+.theory-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 18px;
+  border-left: 3px solid var(--accent);
+}
+.theory-card h4 { font-size: 13px; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+.theory-card p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+/* ── FOOTER ── */
+footer {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 40px 24px;
+  text-align: center;
+}
+footer .footer-logo { font-size: 22px; font-weight: 900; margin-bottom: 8px; }
+footer .footer-logo span {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+footer p { font-size: 13px; color: var(--muted); }
+footer a { color: var(--accent2); text-decoration: none; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 600px) {
+  .stats-inner { flex-direction: column; }
+  .stat-item { border-right: none; border-bottom: 1px solid var(--border); }
+  .stat-item:last-child { border-bottom: none; }
+  .steps::before { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ HERO ══════════════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-badge">📱 Prototipo Interactivo · UAQ DTE 2026</div>
+  <h1 class="hero-title">
+    <span class="grad">ScrollBreak</span>
+  </h1>
+  <p class="hero-subtitle">
+    Un videojuego educativo que <b>interrumpe el doomscrolling</b>
+    y lo convierte en aprendizaje de programación e inteligencia artificial.
+  </p>
+  <div class="hero-cta-group">
+    <a class="btn-primary" href="scrollbreak_demo.html" target="_blank">🎮 Abrir Demo</a>
+    <a class="btn-secondary" href="#como-usar">📖 Cómo usarlo</a>
+  </div>
+  <div class="scroll-hint">
+    <span>Ver presentación</span>
+    <span style="font-size:18px">↓</span>
+  </div>
+</div>
+
+<!-- ══ STATS ══════════════════════════════════════════════ -->
+<div class="stats-strip">
+  <div class="stats-inner">
+    <div class="stat-item">
+      <div class="stat-val">61%</div>
+      <div class="stat-label">alteraciones del sueño</div>
+      <div class="stat-source">Usman et al., 2025 · N=1,000</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val">r=0.67</div>
+      <div class="stat-label">doomscrolling → fatiga emocional</div>
+      <div class="stat-source">Correlación de Pearson</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val">52%</div>
+      <div class="stat-label">dificultad para concentrarse</div>
+      <div class="stat-source">Estudiantes universitarios</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val">14</div>
+      <div class="stat-label">estudios confirman impacto en salud mental</div>
+      <div class="stat-source">Iqbal & Iqbal, 2026 · Revisión sistemática</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ EL PROBLEMA ══════════════════════════════════════ -->
+<section>
+  <div class="section-tag">El problema</div>
+  <h2 class="section-title">¿Qué es el doomscrolling?</h2>
+  <p class="section-lead">
+    El consumo compulsivo de noticias negativas en redes sociales que no podemos parar,
+    aunque sabemos que nos hace daño.
+  </p>
+  <div class="problem-grid">
+    <div class="problem-card">
+      <div class="icon">😰</div>
+      <h3>Ansiedad crónica</h3>
+      <p>El algoritmo prioriza contenido que activa el miedo. Cada scroll genera más incertidumbre, no menos.</p>
+      <div class="metric">+57% ansiedad</div>
+    </div>
+    <div class="problem-card">
+      <div class="icon">😴</div>
+      <h3>Insomnio</h3>
+      <p>1 hora extra de pantalla en la cama = 59% más probabilidad de insomnio.</p>
+      <div class="metric">59% riesgo</div>
+    </div>
+    <div class="problem-card">
+      <div class="icon">🧠</div>
+      <h3>Deterioro cognitivo</h3>
+      <p>La saturación de información negativa agota la concentración y dificulta el aprendizaje.</p>
+      <div class="metric">52% se concentra menos</div>
+    </div>
+    <div class="problem-card">
+      <div class="icon">🔄</div>
+      <h3>Bucle sin salida</h3>
+      <p>Saber que es dañino no es suficiente. La mayoría continúa scrolleando de todas formas.</p>
+      <div class="metric">Sin intervención efectiva</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ LA SOLUCIÓN ══════════════════════════════════════ -->
+<section>
+  <div class="section-tag">La propuesta</div>
+  <h2 class="section-title">¿Cómo funciona ScrollBreak?</h2>
+  <p class="section-lead">
+    No bloquea el teléfono. No pone restricciones. Ofrece una alternativa más atractiva
+    justo en el momento de mayor vulnerabilidad.
+  </p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">📱</div>
+      <div class="step-body">
+        <h3>Detección inteligente</h3>
+        <p>La app detecta cuando llevas más de 15 minutos haciendo scroll continuo en redes sociales. El tiempo umbral es configurable por el usuario.</p>
+        <span class="tag">Tecnología de fondo · Sin interrumpir lo que haces</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">🔔</div>
+      <div class="step-body">
+        <h3>Notificación invitadora</h3>
+        <p>No es una alarma ni un bloqueo. Es una invitación: "¿15 min de scroll? Toma un break — Reto del día: detecta el bug en Python · +50 XP".</p>
+        <span class="tag">Psicología del nudge · Voluntario, no forzado</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">🎮</div>
+      <div class="step-body">
+        <h3>Minijuego de 5 minutos</h3>
+        <p>Retos de código con narrativa de ciencia ficción. Sin instalar nada. Sin necesitar experiencia previa. El sistema adapta la dificultad automáticamente.</p>
+        <span class="tag">Gamificación · Teoría del Flujo · Microlearning</span>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">🏆</div>
+      <div class="step-body">
+        <h3>Progresión y recompensas</h3>
+        <p>XP, rachas, insignias y niveles de competencia. El usuario ve su avance real en programación e IA.</p>
+        <span class="tag">SDT (Deci & Ryan) · Competencia + Autonomía + Relación</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ RETOS EN LA DEMO ══════════════════════════════════ -->
+<section>
+  <div class="section-tag">Contenido del prototipo</div>
+  <h2 class="section-title">3 retos incluidos en la demo</h2>
+  <p class="section-lead">Cada reto tiene narrativa espacial, opciones múltiples y explicación pedagógica.</p>
+  <div class="challenges-grid">
+    <div class="challenge-card">
+      <div class="track-pill">Python Básico</div>
+      <h3>🐛 Detecta el bug</h3>
+      <div class="code-preview">
+        <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">0</span>, <span class="num">5</span>):<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">print</span>(i)
+      </div>
+      <p>¿Por qué imprime del 0 al 4 en lugar del 1 al 5? Identifica el error en <code>range()</code>.</p>
+      <span class="xp-chip">⚡ +30 XP</span>
+    </div>
+    <div class="challenge-card">
+      <div class="track-pill">Python Básico</div>
+      <h3>🤔 ¿Qué imprime?</h3>
+      <div class="code-preview">
+        temps = [<span class="num">20</span>, <span class="num">22</span>, <span class="num">18</span>, <span class="num">24</span>]<br>
+        <span class="cm"># ¿Qué valor imprime?</span><br>
+        <span class="fn">print</span>(<span class="fn">round</span>(total/<span class="fn">len</span>(temps),<span class="num">1</span>))
+      </div>
+      <p>Calcula el promedio mentalmente y elige el resultado correcto sin ejecutar el código.</p>
+      <span class="xp-chip">⚡ +30 XP</span>
+    </div>
+    <div class="challenge-card">
+      <div class="track-pill">IA Aplicada</div>
+      <h3>🤖 Prompt Engineering</h3>
+      <div class="code-preview">
+        texto = <span class="num">"La entrega tardó</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="num">pero el producto</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="num">es excelente"</span>
+      </div>
+      <p>¿Cuál es el mejor prompt para clasificar esta reseña con un modelo de lenguaje (IA)?</p>
+      <span class="xp-chip">⚡ +40 XP</span>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ CÓMO USAR ══════════════════════════════════════════ -->
+<section id="como-usar">
+  <div class="section-tag">Guía rápida</div>
+  <h2 class="section-title">Cómo abrir la demo</h2>
+  <p class="section-lead">No requiere instalación. Funciona en cualquier computadora o teléfono con navegador.</p>
+
+  <div class="install-wrap">
+
+    <!-- OPCIÓN A: Link directo -->
+    <div class="install-card featured">
+      <div class="card-header">
+        <div class="card-icon">🌐</div>
+        <div>
+          <div class="card-label primary">✅ Opción recomendada</div>
+          <h3>Abrir desde el navegador</h3>
+        </div>
+      </div>
+
+      <div class="install-step">
+        <div class="step-circle">1</div>
+        <div class="step-text">
+          <b>Abre tu navegador</b><br>
+          <span>Chrome, Safari, Edge o Firefox — cualquiera funciona</span>
+        </div>
+      </div>
+      <div class="install-step">
+        <div class="step-circle">2</div>
+        <div class="step-text">
+          <b>Copia y pega este enlace</b><br>
+          <span>En la barra de direcciones del navegador</span>
+        </div>
+      </div>
+      <div class="install-step">
+        <div class="step-circle">3</div>
+        <div class="step-text">
+          <b>Presiona Enter</b><br>
+          <span>La demo carga en 2–3 segundos</span>
+        </div>
+      </div>
+
+      <div class="url-box">
+        <span id="demoUrl">https://soulness11.github.io/atenea-ai/prototipo/scrollbreak_demo.html</span>
+        <button class="copy-btn" onclick="copyUrl()">Copiar</button>
+      </div>
+    </div>
+
+    <!-- OPCIÓN B: Descarga -->
+    <div class="install-card">
+      <div class="card-header">
+        <div class="card-icon">💾</div>
+        <div>
+          <div class="card-label secondary">Alternativa</div>
+          <h3>Descargar el archivo</h3>
+        </div>
+      </div>
+
+      <div class="install-step">
+        <div class="step-circle">1</div>
+        <div class="step-text">
+          <b>Entra al repositorio de GitHub</b><br>
+          <span>github.com/Soulness11/atenea-ai</span>
+        </div>
+      </div>
+      <div class="install-step">
+        <div class="step-circle">2</div>
+        <div class="step-text">
+          <b>Navega a prototipo/</b><br>
+          <span>Haz clic en <b>scrollbreak_demo.html</b></span>
+        </div>
+      </div>
+      <div class="install-step">
+        <div class="step-circle">3</div>
+        <div class="step-text">
+          <b>Descarga el archivo</b><br>
+          <span>Botón ↓ (Download raw file) arriba a la derecha</span>
+        </div>
+      </div>
+      <div class="install-step">
+        <div class="step-circle">4</div>
+        <div class="step-text">
+          <b>Doble clic en el archivo descargado</b><br>
+          <span>Se abre en el navegador automáticamente. Sin internet.</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ CONTROLES DE LA DEMO ═══════════════════════════════ -->
+<section>
+  <div class="section-tag">Dentro de la demo</div>
+  <h2 class="section-title">Guía de uso paso a paso</h2>
+  <p class="section-lead">La demo simula el ciclo completo desde el scroll hasta el aprendizaje.</p>
+
+  <div class="controls-grid">
+    <div class="control-card">
+      <div class="ctrl-icon">📱</div>
+      <h4>Feed de Twitter/X</h4>
+      <p>Verás noticias negativas haciendo scroll automático. Simula el doomscrolling típico.</p>
+    </div>
+    <div class="control-card">
+      <div class="ctrl-icon">⏱</div>
+      <h4>Barra de tiempo</h4>
+      <p>Abajo del feed hay una barra que muestra cuánto llevas scrolleando. Se llena en 15 segundos.</p>
+    </div>
+    <div class="control-card">
+      <div class="ctrl-icon">🔔</div>
+      <h4>Notificación automática</h4>
+      <p>Al llegar al 100%, aparece la notificación de ScrollBreak. Haz clic en <b>"¡Jugar!"</b>.</p>
+    </div>
+    <div class="control-card">
+      <div class="ctrl-icon">🎮</div>
+      <h4>Los retos</h4>
+      <p>Lee el código, elige la respuesta correcta. Al terminar los 3 retos ves tu puntaje final.</p>
+    </div>
+    <div class="control-card">
+      <div class="ctrl-icon">⚡</div>
+      <h4>Acelerar la demo</h4>
+      <p>Haz clic en el botón <b>"⚡ Acelerar demo"</b> debajo del teléfono para ver la notificación en 4 segundos.</p>
+    </div>
+    <div class="control-card">
+      <div class="ctrl-icon">🔄</div>
+      <h4>Reiniciar</h4>
+      <p>En la pantalla de resultados usa <b>"Nuevo reto"</b> o <b>"← Volver al feed"</b> para repetir.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ FUNDAMENTO TEÓRICO ════════════════════════════════ -->
+<section>
+  <div class="section-tag">Sustento teórico</div>
+  <h2 class="section-title">¿Por qué funciona este enfoque?</h2>
+  <p class="section-lead">El diseño del videojuego está fundamentado en cuatro teorías del aprendizaje.</p>
+  <div class="theory-grid">
+    <div class="theory-card">
+      <h4>Gamificación (Deterding, 2011)</h4>
+      <p>Elementos de juego en contextos educativos incrementan la motivación intrínseca y la persistencia.</p>
+    </div>
+    <div class="theory-card" style="border-left-color: var(--accent2)">
+      <h4>Teoría del Flujo (Csikszentmihalyi, 1990)</h4>
+      <p>Dificultad adaptativa = equilibrio reto/habilidad = absorción positiva que sustituye la absorción negativa del scroll.</p>
+    </div>
+    <div class="theory-card" style="border-left-color: var(--warn)">
+      <h4>Autodeterminación (Deci & Ryan, 1985)</h4>
+      <p>Autonomía + competencia + relación social = motivación sostenida sin presión externa.</p>
+    </div>
+    <div class="theory-card" style="border-left-color: var(--green)">
+      <h4>Microlearning + Espaciado</h4>
+      <p>Sesiones de 5–15 min son óptimas para la memoria procedimental y compatibles con patrones de atención digital.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ════════════════════════════════════════════ -->
+<footer>
+  <div class="footer-logo"><span>ScrollBreak</span></div>
+  <p>Prototipo desarrollado en el marco de la tesis doctoral<br>
+     <em>Modelo predictivo basado en machine learning para la detección temprana del abandono escolar</em><br>
+     Luis Francisco Pardo Perea · Doctorado en Tecnología Educativa · UAQ · 2026
+  </p>
+  <br>
+  <p>
+    🎮 <a href="scrollbreak_demo.html" target="_blank">Abrir demo</a> &nbsp;·&nbsp;
+    💻 <a href="https://github.com/Soulness11/atenea-ai" target="_blank">Ver código en GitHub</a>
+  </p>
+</footer>
+
+<script>
+function copyUrl() {
+  const url = document.getElementById('demoUrl').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = '¡Copiado!';
+    btn.style.color = 'var(--accent2)';
+    btn.style.borderColor = 'var(--accent2)';
+    setTimeout(() => {
+      btn.textContent = 'Copiar';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }, 2000);
+  });
+}
+</script>
+
+</body>
+</html>
