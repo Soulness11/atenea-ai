@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScrollBreak — Demo</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #252836;
+    --border: #2e3347;
+    --text: #e8eaf0;
+    --muted: #7a7f99;
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --danger: #ff5252;
+    --warn: #ffaa00;
+    --green: #4caf50;
+    --radius: 14px;
+    --phone-w: 390px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #070810;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0 60px;
+    color: var(--text);
+  }
+
+  /* ── HEADER ── */
+  .demo-header {
+    text-align: center;
+    margin-bottom: 24px;
+    user-select: none;
+  }
+  .demo-header .logo {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .demo-header .tagline {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ── PHONE FRAME ── */
+  .phone-wrap {
+    position: relative;
+    width: var(--phone-w);
+    max-width: 96vw;
+  }
+  .phone {
+    width: 100%;
+    background: var(--bg);
+    border-radius: 40px;
+    border: 2px solid #2a2d40;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 0 6px #111320;
+    position: relative;
+  }
+  .phone-notch {
+    background: #111320;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .notch-cam { width: 10px; height: 10px; border-radius: 50%; background: #1e2035; }
+  .notch-speaker { width: 56px; height: 6px; border-radius: 3px; background: #1e2035; }
+  .phone-status {
+    height: 28px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .status-time { font-size: 12px; font-weight: 700; }
+  .status-icons { display: flex; gap: 6px; align-items: center; }
+
+  /* ── SCREENS ── */
+  .screen {
+    display: none;
+    flex-direction: column;
+    height: 700px;
+    overflow: hidden;
+    position: relative;
+  }
+  .screen.active { display: flex; }
+
+  /* ── SCREEN: SOCIAL FEED ── */
+  #screen-feed { background: var(--bg); }
+  .feed-topbar {
+    padding: 10px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .feed-logo { font-size: 22px; font-weight: 900; color: var(--text); }
+  .feed-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .feed-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+    scroll-behavior: smooth;
+  }
+  .feed-scroll::-webkit-scrollbar { width: 3px; }
+  .feed-scroll::-webkit-scrollbar-track { background: transparent; }
+  .feed-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .post {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: default;
+    transition: background 0.15s;
+  }
+  .post:hover { background: rgba(255,255,255,0.02); }
+  .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .post-ava { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .post-meta { flex: 1; }
+  .post-name { font-size: 13px; font-weight: 700; }
+  .post-handle { font-size: 12px; color: var(--muted); }
+  .post-time { font-size: 11px; color: var(--muted); }
+  .post-body { font-size: 14px; line-height: 1.5; color: var(--text); margin-bottom: 10px; }
+  .post-body.negative { color: #d0a0a0; }
+  .post-actions { display: flex; gap: 24px; }
+  .post-action { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); cursor: pointer; }
+  .post-action:hover { color: var(--accent); }
+
+  /* scroll timer bar */
+  .scroll-timer-wrap {
+    flex-shrink: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .scroll-timer-label { font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .scroll-timer-bar { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .scroll-timer-fill {
+    height: 100%; width: 0%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    transition: width 0.5s linear;
+  }
+  .scroll-timer-pct { font-size: 11px; font-weight: 700; color: var(--accent2); min-width: 28px; }
+
+  /* ── NOTIFICATION OVERLAY ── */
+  .notif-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    z-index: 50;
+    padding: 10px 12px 0;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .notif-card {
+    background: rgba(28, 30, 45, 0.97);
+    border: 1px solid rgba(108,99,255,0.4);
+    border-radius: 16px;
+    padding: 12px 14px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    pointer-events: all;
+    cursor: pointer;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    transform: translateY(-120%);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .notif-card.show { transform: translateY(0); }
+  .notif-icon { font-size: 28px; flex-shrink: 0; }
+  .notif-body { flex: 1; }
+  .notif-app { font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; }
+  .notif-title { font-size: 13px; font-weight: 700; margin: 2px 0; }
+  .notif-msg { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .notif-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .notif-btn {
+    padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    cursor: pointer; border: none;
+  }
+  .notif-btn.primary { background: var(--accent); color: white; }
+  .notif-btn.ghost { background: var(--border); color: var(--muted); }
+
+  /* ── SCREEN: GAME ── */
+  #screen-game { background: var(--bg); }
+  .game-topbar {
+    padding: 10px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .back-btn { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 4px; }
+  .game-title { font-size: 15px; font-weight: 800; flex: 1; }
+  .xp-badge {
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    color: white; font-size: 11px; font-weight: 800;
+    padding: 3px 10px; border-radius: 20px;
+  }
+  .streak-badge {
+    background: var(--surface2); color: var(--warn);
+    font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px;
+  }
+
+  .game-body { flex: 1; overflow-y: auto; padding: 14px 16px 20px; }
+  .game-body::-webkit-scrollbar { width: 3px; }
+  .game-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .challenge-header { margin-bottom: 16px; }
+  .challenge-track {
+    display: inline-block;
+    background: rgba(108,99,255,0.15);
+    color: var(--accent);
+    font-size: 10px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .challenge-title { font-size: 17px; font-weight: 800; margin-bottom: 4px; }
+  .challenge-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+  .story-box {
+    background: var(--surface);
+    border-left: 3px solid var(--accent2);
+    border-radius: 0 10px 10px 0;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: #a0b4c8;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    font-style: italic;
+  }
+  .story-box strong { color: var(--accent2); font-style: normal; }
+
+  .code-block {
+    background: #0d0f1a;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 14px;
+    font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-x: auto;
+  }
+  .code-block .kw { color: #c792ea; }
+  .code-block .fn { color: #82aaff; }
+  .code-block .str { color: #c3e88d; }
+  .code-block .cm { color: #546e7a; }
+  .code-block .num { color: #f78c6c; }
+  .code-block .err { color: var(--danger); text-decoration: wavy underline; }
+
+  .options-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .option-btn {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: 'SF Mono', monospace;
+    color: var(--text);
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .option-btn .opt-letter {
+    width: 24px; height: 24px; border-radius: 6px;
+    background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    flex-shrink: 0;
+  }
+  .option-btn:hover:not(:disabled) { border-color: var(--accent); background: rgba(108,99,255,0.08); }
+  .option-btn.correct { border-color: var(--green); background: rgba(76,175,80,0.1); }
+  .option-btn.wrong { border-color: var(--danger); background: rgba(255,82,82,0.08); }
+  .option-btn:disabled { cursor: default; }
+
+  .feedback-box {
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    display: none;
+  }
+  .feedback-box.show { display: block; }
+  .feedback-box.correct { background: rgba(76,175,80,0.12); border: 1px solid rgba(76,175,80,0.3); }
+  .feedback-box.wrong { background: rgba(255,82,82,0.1); border: 1px solid rgba(255,82,82,0.25); }
+  .feedback-box .fb-title { font-weight: 800; font-size: 15px; margin-bottom: 4px; }
+  .feedback-box.correct .fb-title { color: var(--green); }
+  .feedback-box.wrong .fb-title { color: var(--danger); }
+
+  .next-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    display: none;
+    transition: transform 0.1s, opacity 0.1s;
+  }
+  .next-btn:hover { transform: translateY(-1px); opacity: 0.95; }
+  .next-btn.show { display: block; }
+
+  /* progress dots */
+  .progress-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 0;
+    flex-shrink: 0;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+  }
+  .pdot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border); transition: all 0.3s;
+  }
+  .pdot.done { background: var(--accent2); }
+  .pdot.active { background: var(--accent); transform: scale(1.4); }
+
+  /* ── SCREEN: RESULT ── */
+  #screen-result {
+    background: var(--bg);
+    justify-content: center;
+    align-items: center;
+    padding: 30px 24px;
+    text-align: center;
+    gap: 16px;
+  }
+  .result-emoji { font-size: 64px; animation: pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+  @keyframes pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .result-title { font-size: 22px; font-weight: 900; }
+  .result-subtitle { font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .result-stats { display: flex; gap: 12px; width: 100%; }
+  .result-stat {
+    flex: 1; background: var(--surface); border-radius: 12px;
+    padding: 14px 10px; text-align: center;
+  }
+  .result-stat .rs-val { font-size: 22px; font-weight: 900; }
+  .result-stat .rs-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .result-stat.xp .rs-val { color: #f59e0b; }
+  .result-stat.streak .rs-val { color: var(--warn); }
+  .result-stat.level .rs-val { color: var(--accent2); }
+  .level-bar-wrap { width: 100%; background: var(--surface); border-radius: 12px; padding: 14px 16px; }
+  .level-bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; }
+  .level-bar-label span:last-child { color: var(--accent2); font-weight: 700; }
+  .level-bar-bg { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .level-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 1s ease 0.5s; }
+  .replay-btn {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    border: none; border-radius: 12px; color: white;
+    font-size: 15px; font-weight: 800; cursor: pointer;
+  }
+  .back-feed-btn {
+    width: 100%; padding: 12px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; color: var(--muted);
+    font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+
+  /* ── XP POP ── */
+  .xp-pop {
+    position: absolute;
+    pointer-events: none;
+    font-size: 18px;
+    font-weight: 900;
+    color: #f59e0b;
+    animation: floatUp 1.2s ease forwards;
+    z-index: 100;
+  }
+  @keyframes floatUp {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    60%  { opacity: 1; transform: translateY(-40px) scale(1.3); }
+    100% { opacity: 0; transform: translateY(-70px) scale(0.8); }
+  }
+
+  /* ── DEMO CONTROLS ── */
+  .demo-controls {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .demo-controls b { color: var(--text); }
+  .speed-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); padding: 6px 16px; border-radius: 20px;
+    font-size: 12px; cursor: pointer; transition: all 0.15s;
+  }
+  .speed-btn:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="demo-header">
+  <div class="logo">ScrollBreak</div>
+  <div class="tagline">Interrumpe el scroll. Aprende algo real.</div>
+</div>
+
+<div class="phone-wrap">
+  <div class="phone">
+    <!-- Notch -->
+    <div class="phone-notch">
+      <div class="notch-cam"></div>
+      <div class="notch-speaker"></div>
+    </div>
+    <!-- Status bar -->
+    <div class="phone-status">
+      <span class="status-time" id="statusTime">9:41</span>
+      <div class="status-icons">
+        <span>📶</span><span>🔋</span>
+      </div>
+    </div>
+
+    <!-- SCREEN 1: Social Feed -->
+    <div class="screen active" id="screen-feed">
+      <div class="feed-topbar">
+        <div class="feed-logo">𝕏</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:18px;cursor:pointer">🔔</span>
+          <div class="feed-avatar">👤</div>
+        </div>
+      </div>
+
+      <div class="feed-scroll" id="feedScroll">
+        <!-- posts injected by JS -->
+      </div>
+
+      <!-- Timer bar -->
+      <div class="scroll-timer-wrap">
+        <div class="scroll-timer-label">⏱ Tiempo scrolleando</div>
+        <div class="scroll-timer-bar"><div class="scroll-timer-fill" id="timerFill"></div></div>
+        <div class="scroll-timer-pct" id="timerPct">0%</div>
+      </div>
+
+      <!-- Notification overlay -->
+      <div class="notif-overlay">
+        <div class="notif-card" id="notifCard" onclick="launchGame()">
+          <div class="notif-icon">🎮</div>
+          <div class="notif-body">
+            <div class="notif-app">ScrollBreak</div>
+            <div class="notif-title">¿15 min de scroll? Toma un break.</div>
+            <div class="notif-msg">Reto del día: <b>detecta el bug en Python</b> — 5 min • +50 XP</div>
+            <div class="notif-actions">
+              <button class="notif-btn primary" onclick="event.stopPropagation();launchGame()">¡Jugar!</button>
+              <button class="notif-btn ghost" onclick="event.stopPropagation();dismissNotif()">Ahora no</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 2: Game -->
+    <div class="screen" id="screen-game">
+      <div class="game-topbar">
+        <button class="back-btn" onclick="goBack()">←</button>
+        <div class="game-title" id="gameTitle">Reto del día</div>
+        <div class="streak-badge" id="streakBadge">🔥 4</div>
+        <div class="xp-badge" id="xpBadge">⚡ 320 XP</div>
+      </div>
+
+      <div class="game-body" id="gameBody">
+        <!-- challenge content injected by JS -->
+      </div>
+
+      <div class="progress-dots" id="progressDots">
+        <!-- dots injected by JS -->
+      </div>
+    </div>
+
+    <!-- SCREEN 3: Result -->
+    <div class="screen" id="screen-result">
+      <div class="result-emoji">🏆</div>
+      <div class="result-title">¡Reto completado!</div>
+      <div class="result-subtitle" id="resultSubtitle">Resolviste todos los retos de hoy.<br>Tu racha sigue creciendo.</div>
+
+      <div class="result-stats">
+        <div class="result-stat xp">
+          <div class="rs-val" id="resXP">+80</div>
+          <div class="rs-label">XP ganado</div>
+        </div>
+        <div class="result-stat streak">
+          <div class="rs-val">🔥 5</div>
+          <div class="rs-label">Racha días</div>
+        </div>
+        <div class="result-stat level">
+          <div class="rs-val">Nv 3</div>
+          <div class="rs-label">Python Básico</div>
+        </div>
+      </div>
+
+      <div class="level-bar-wrap">
+        <div class="level-bar-label">
+          <span>Python Básico → Nv 4</span>
+          <span id="levelPct">68%</span>
+        </div>
+        <div class="level-bar-bg">
+          <div class="level-bar-fill" id="levelBar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <button class="replay-btn" onclick="replayGame()">🔄 Nuevo reto</button>
+      <button class="back-feed-btn" onclick="backToFeed()">← Volver al feed</button>
+    </div>
+  </div>
+</div>
+
+<div class="demo-controls">
+  <span>Scroll por el feed — la notificación aparece sola</span>
+  <button class="speed-btn" id="speedBtn" onclick="toggleSpeed()">⚡ Acelerar demo (15s)</button>
+</div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────
+const POSTS = [
+  { ava: "😤", name: "Noticias MX", handle: "@noticiasmx", time: "2m",
+    body: "⚠️ URGENTE: Inflación alcanza máximo histórico. Expertos advierten crisis económica inminente para millones de familias. Hilo 🧵", neg: true, likes: "4.2K", rt: "1.8K", rep: "892" },
+  { ava: "😰", name: "Alerta Global", handle: "@alertaglobal", time: "5m",
+    body: "Nuevo estudio: el 78% de los jóvenes reporta ansiedad severa. Las redes sociales son el principal factor. Pero tú sigues aquí, ¿verdad?", neg: true, likes: "9.1K", rt: "3.4K", rep: "2.1K" },
+  { ava: "🤖", name: "TechAlert", handle: "@techalert", time: "8m",
+    body: "La IA reemplazará el 40% de los trabajos de oficina antes de 2027. ¿Estás preparado? La mayoría no lo está. 👇", neg: true, likes: "12K", rt: "5.7K", rep: "3.3K" },
+  { ava: "😱", name: "Crisis Mundial", handle: "@crisisworld", time: "12m",
+    body: "HILO: Todo lo que los medios no te cuentan sobre la situación en Medio Oriente. Esto es más grave de lo que crees. 1/23", neg: true, likes: "21K", rt: "8.9K", rep: "5.1K" },
+  { ava: "😔", name: "Clima Hoy", handle: "@climahoy", time: "15m",
+    body: "Temperatura récord en 47 países simultáneamente. Científicos: 'Ya es demasiado tarde para ciertos puntos de no retorno.'", neg: true, likes: "6.8K", rt: "2.2K", rep: "1.4K" },
+  { ava: "😠", name: "Política MX", handle: "@politicamx", time: "18m",
+    body: "El congreso aprueba nueva reforma que afectará pensiones de 34 millones de mexicanos. Detalles que NO te están diciendo 👇", neg: true, likes: "15K", rt: "6.1K", rep: "4.8K" },
+  { ava: "😶", name: "Economía Real", handle: "@econreal", time: "22m",
+    body: "Tu poder adquisitivo cayó 23% en los últimos 4 años. Aquí el desglose por sector que el gobierno no quiere que veas.", neg: true, likes: "8.3K", rt: "3.1K", rep: "2.0K" },
+  { ava: "😵", name: "Salud Digital", handle: "@saluddigital", time: "27m",
+    body: "ADVERTENCIA: el uso excesivo de pantallas está provocando miopía masiva en jóvenes de 15-25 años. Las cifras son alarmantes.", neg: true, likes: "4.5K", rt: "1.9K", rep: "760" },
+];
+
+// ── CHALLENGES ──────────────────────────────────────────
+const CHALLENGES = [
+  {
+    track: "Python Básico",
+    title: "Detecta el bug 🐛",
+    desc: "Este código debería imprimir los números del 1 al 5, pero hay un error. ¿Cuál es el problema?",
+    story: "Tu nave espacial <strong>Atenea-7</strong> no puede despegar. El sistema de conteo de combustible tiene un bug. Encuéntralo antes de que se agote el tiempo de lanzamiento.",
+    code: `<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">0</span>, <span class="num">5</span>):
+    <span class="fn">print</span>(i)`,
+    options: [
+      { text: "range(0, 5) debería ser range(1, 6)", correct: true },
+      { text: "Falta dos puntos después del for", correct: false },
+      { text: "print(i) debería ser print(i+1)", correct: false },
+      { text: "No hay ningún error", correct: false },
+    ],
+    explanation: "✅ ¡Correcto! range(0, 5) genera [0,1,2,3,4]. Para obtener [1,2,3,4,5] necesitamos range(1, 6). Alternativamente, range(1, 6) o imprimir i+1 también funcionarían.",
+    explanationWrong: "❌ El problema está en range(0, 5) que empieza en 0 en lugar de 1. La solución es range(1, 6).",
+    xp: 30,
+  },
+  {
+    track: "Python Básico",
+    title: "¿Qué imprime? 🤔",
+    desc: "Sin ejecutar el código, ¿qué valor imprime este programa?",
+    story: "El sensor de temperatura de la nave calcula el promedio. El co-piloto dice que hay un error de cálculo. <strong>¿Tiene razón?</strong>",
+    code: `temps = [<span class="num">20</span>, <span class="num">22</span>, <span class="num">18</span>, <span class="num">24</span>]
+total = <span class="num">0</span>
+<span class="kw">for</span> t <span class="kw">in</span> temps:
+    total = total + t
+promedio = total / <span class="fn">len</span>(temps)
+<span class="fn">print</span>(<span class="fn">round</span>(promedio, <span class="num">1</span>))`,
+    options: [
+      { text: "21.0", correct: true },
+      { text: "84", correct: false },
+      { text: "20.5", correct: false },
+      { text: "Error: division por cero", correct: false },
+    ],
+    explanation: "✅ ¡Perfecto! La suma es 20+22+18+24 = 84. Dividida entre 4 elementos = 21.0. round(21.0, 1) = 21.0. El co-piloto estaba equivocado.",
+    explanationWrong: "❌ La suma 20+22+18+24 = 84. Dividida entre len(temps) = 4: 84/4 = 21.0",
+    xp: 30,
+  },
+  {
+    track: "IA Aplicada",
+    title: "Prompt Engineering 🤖",
+    desc: "Quieres que una IA clasifique reseñas como positivas o negativas. ¿Cuál es el mejor prompt?",
+    story: "La IA de la nave necesita analizar los mensajes de la tripulación para detectar estrés. <strong>Diseña el prompt correcto</strong> para activar el protocolo de apoyo.",
+    code: `<span class="cm"># Contexto: tienes acceso a un LLM como GPT-4 o Claude.</span>
+<span class="cm"># Quieres clasificar esta reseña:</span>
+texto = <span class="str">"La entrega tardó 3 días pero el producto es excelente"</span>
+
+<span class="cm"># Elige el mejor prompt:</span>`,
+    options: [
+      { text: 'Clasifica como POSITIVO o NEGATIVO. Solo responde una palabra.\n\nReseña: {texto}', correct: true },
+      { text: "Analiza esta reseña y dime qué piensas: {texto}", correct: false },
+      { text: "¿Es esta reseña buena o mala? {texto}", correct: false },
+      { text: "Texto: {texto} — ¿positivo?", correct: false },
+    ],
+    explanation: '✅ ¡Excelente! Un buen prompt de clasificación: (1) define exactamente las categorías posibles, (2) pide output específico ("solo una palabra"), (3) usa estructura clara. Esto reduce tokens y aumenta la consistencia.',
+    explanationWrong: '❌ La opción A es mejor: define las categorías exactas (POSITIVO/NEGATIVO), restringe el output a una sola palabra, y tiene estructura clara. Los otros prompts son ambiguos y generarán respuestas largas e inconsistentes.',
+    xp: 40,
+  },
+];
+
+// ── STATE ────────────────────────────────────────────────
+let state = {
+  timerInterval: null,
+  timerProgress: 0,
+  timerDuration: 15000,  // 15 seconds for demo
+  notifShown: false,
+  currentChallenge: 0,
+  totalXP: 320,
+  correctAnswers: 0,
+  answered: false,
+  sessionXP: 0,
+};
+
+// ── INIT ────────────────────────────────────────────────
+function init() {
+  updateClock();
+  setInterval(updateClock, 1000);
+  renderFeed();
+  startScrollTimer();
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('statusTime').textContent =
+    now.getHours().toString().padStart(2,'0') + ':' +
+    now.getMinutes().toString().padStart(2,'0');
+}
+
+function renderFeed() {
+  const container = document.getElementById('feedScroll');
+  container.innerHTML = POSTS.map(p => `
+    <div class="post">
+      <div class="post-header">
+        <div class="post-ava" style="background:var(--surface2)">${p.ava}</div>
+        <div class="post-meta">
+          <div class="post-name">${p.name}</div>
+          <div class="post-handle">${p.handle} · ${p.time}</div>
+        </div>
+      </div>
+      <div class="post-body ${p.neg ? 'negative' : ''}">${p.body}</div>
+      <div class="post-actions">
+        <div class="post-action">💬 ${p.rep}</div>
+        <div class="post-action">🔁 ${p.rt}</div>
+        <div class="post-action">❤️ ${p.likes}</div>
+        <div class="post-action">↗️</div>
+      </div>
+    </div>
+  `).join('');
+
+  // auto-scroll feed slowly
+  let scrollPos = 0;
+  setInterval(() => {
+    if (document.getElementById('screen-feed').classList.contains('active')) {
+      scrollPos += 0.6;
+      container.scrollTop = scrollPos;
+    }
+  }, 40);
+}
+
+function startScrollTimer() {
+  const fill = document.getElementById('timerFill');
+  const pct = document.getElementById('timerPct');
+  state.timerProgress = 0;
+  const step = 100 / (state.timerDuration / 500);
+
+  state.timerInterval = setInterval(() => {
+    if (!document.getElementById('screen-feed').classList.contains('active')) return;
+    state.timerProgress = Math.min(100, state.timerProgress + step);
+    fill.style.width = state.timerProgress + '%';
+    pct.textContent = Math.round(state.timerProgress) + '%';
+
+    if (state.timerProgress >= 100 && !state.notifShown) {
+      showNotification();
+    }
+  }, 500);
+}
+
+function showNotification() {
+  state.notifShown = true;
+  const card = document.getElementById('notifCard');
+  card.classList.add('show');
+}
+
+function dismissNotif() {
+  const card = document.getElementById('notifCard');
+  card.classList.remove('show');
+}
+
+function launchGame() {
+  dismissNotif();
+  clearInterval(state.timerInterval);
+  state.currentChallenge = 0;
+  state.correctAnswers = 0;
+  state.sessionXP = 0;
+  showScreen('screen-game');
+  renderChallenge();
+}
+
+// ── GAME ────────────────────────────────────────────────
+function renderChallenge() {
+  const c = CHALLENGES[state.currentChallenge];
+  state.answered = false;
+
+  document.getElementById('gameTitle').textContent = `Reto ${state.currentChallenge + 1}/${CHALLENGES.length}`;
+
+  // Progress dots
+  const dots = document.getElementById('progressDots');
+  dots.innerHTML = CHALLENGES.map((_, i) => {
+    const cls = i < state.currentChallenge ? 'done' : i === state.currentChallenge ? 'active' : '';
+    return `<div class="pdot ${cls}"></div>`;
+  }).join('');
+
+  const body = document.getElementById('gameBody');
+  const letters = ['A', 'B', 'C', 'D'];
+  body.innerHTML = `
+    <div class="challenge-header">
+      <div class="challenge-track">${c.track}</div>
+      <div class="challenge-title">${c.title}</div>
+      <div class="challenge-desc">${c.desc}</div>
+    </div>
+    <div class="story-box">🚀 ${c.story}</div>
+    <div class="code-block">${c.code}</div>
+    <div class="options-grid">
+      ${c.options.map((o, i) => `
+        <button class="option-btn" id="opt-${i}" onclick="selectAnswer(${i})">
+          <div class="opt-letter">${letters[i]}</div>
+          <span>${o.text}</span>
+        </button>
+      `).join('')}
+    </div>
+    <div class="feedback-box" id="feedback"></div>
+    <button class="next-btn" id="nextBtn" onclick="nextChallenge()">
+      ${state.currentChallenge < CHALLENGES.length - 1 ? 'Siguiente reto →' : '¡Ver resultados! 🏆'}
+    </button>
+  `;
+}
+
+function selectAnswer(idx) {
+  if (state.answered) return;
+  state.answered = true;
+
+  const c = CHALLENGES[state.currentChallenge];
+  const isCorrect = c.options[idx].correct;
+  const feedback = document.getElementById('feedback');
+  const nextBtn = document.getElementById('nextBtn');
+
+  // Style buttons
+  c.options.forEach((o, i) => {
+    const btn = document.getElementById(`opt-${i}`);
+    btn.disabled = true;
+    if (o.correct) btn.classList.add('correct');
+    if (i === idx && !o.correct) btn.classList.add('wrong');
+  });
+
+  // Feedback
+  feedback.className = 'feedback-box show ' + (isCorrect ? 'correct' : 'wrong');
+  if (isCorrect) {
+    const xpEarned = c.xp;
+    state.totalXP += xpEarned;
+    state.sessionXP += xpEarned;
+    state.correctAnswers++;
+    feedback.innerHTML = `<div class="fb-title">✅ ¡Correcto! +${xpEarned} XP</div>${c.explanation}`;
+    document.getElementById('xpBadge').textContent = `⚡ ${state.totalXP} XP`;
+    spawnXPPop(`+${xpEarned} XP`);
+  } else {
+    feedback.innerHTML = `<div class="fb-title">❌ Incorrecto</div>${c.explanationWrong}`;
+  }
+
+  nextBtn.classList.add('show');
+}
+
+function nextChallenge() {
+  if (state.currentChallenge < CHALLENGES.length - 1) {
+    state.currentChallenge++;
+    renderChallenge();
+    document.getElementById('gameBody').scrollTop = 0;
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  showScreen('screen-result');
+  document.getElementById('resXP').textContent = '+' + state.sessionXP;
+
+  const accuracy = Math.round((state.correctAnswers / CHALLENGES.length) * 100);
+  const subtitle = state.correctAnswers === CHALLENGES.length
+    ? `Resolviste todos los retos perfectamente.\n¡Tu racha sigue creciendo! 🔥`
+    : `${state.correctAnswers} de ${CHALLENGES.length} correctos (${accuracy}%).\n¡Sigue practicando para mejorar!`;
+  document.getElementById('resultSubtitle').textContent = subtitle;
+
+  // Animate level bar
+  setTimeout(() => {
+    const pct = Math.min(95, 52 + state.correctAnswers * 16);
+    document.getElementById('levelBar').style.width = pct + '%';
+    document.getElementById('levelPct').textContent = pct + '%';
+  }, 300);
+}
+
+// ── NAVIGATION ───────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goBack() { showScreen('screen-feed'); }
+function backToFeed() {
+  state.notifShown = false;
+  state.timerProgress = 0;
+  document.getElementById('timerFill').style.width = '0%';
+  document.getElementById('timerPct').textContent = '0%';
+  showScreen('screen-feed');
+  startScrollTimer();
+}
+function replayGame() {
+  state.currentChallenge = 0;
+  state.correctAnswers = 0;
+  state.sessionXP = 0;
+  showScreen('screen-game');
+  renderChallenge();
+}
+
+// ── XP POP ───────────────────────────────────────────────
+function spawnXPPop(text) {
+  const gameEl = document.getElementById('screen-game');
+  const pop = document.createElement('div');
+  pop.className = 'xp-pop';
+  pop.textContent = text;
+  pop.style.left = (80 + Math.random() * 200) + 'px';
+  pop.style.top = (200 + Math.random() * 100) + 'px';
+  gameEl.appendChild(pop);
+  setTimeout(() => pop.remove(), 1200);
+}
+
+// ── SPEED TOGGLE ─────────────────────────────────────────
+let fast = false;
+function toggleSpeed() {
+  fast = !fast;
+  const btn = document.getElementById('speedBtn');
+  if (fast) {
+    state.timerDuration = 4000;
+    btn.textContent = '🐢 Velocidad normal';
+    btn.style.borderColor = 'var(--accent2)';
+    btn.style.color = 'var(--accent2)';
+  } else {
+    state.timerDuration = 15000;
+    btn.textContent = '⚡ Acelerar demo (15s)';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+  }
+  // Restart timer with new speed
+  clearInterval(state.timerInterval);
+  if (!state.notifShown) startScrollTimer();
+}
+
+// ── START ────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
